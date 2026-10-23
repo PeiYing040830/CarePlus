@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - CarePlus</title>
+    <link rel="stylesheet" href="contact.css">
+
+<link rel="stylesheet" href="headerNav.css"><link rel="stylesheet" href="demo.css"></head>
+<body><div class="demo-banner">CarePlus · Supabase edition · Dashboard cards and contact forms remain demos.</div><header class="guest-header"><nav class="guest-navbar">
+<a class="guest-logo" href="index.html"><img src="logo.png" class="guest-logo-img" alt="CarePlus"><span class="guest-logo-text">CarePlus</span></a>
+<div class="guest-nav-right"><a href="about.html">About</a> · <a href="doctors.html">Doctors</a> · <a href="contact.html">Contact</a> · <a class="guest-btn guest-btn-login" href="login.html">Login</a></div>
+</nav></header>
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <h1>Contact Us</h1>
+        <p>We're here to help! Get in touch with our support team</p>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact-section">
+    <div class="container">
+        <div class="contact-grid">
+
+            <!-- Contact Information -->
+            <div class="contact-info">
+                <h2>Get In Touch</h2>
+                <p>
+                    Have questions or need assistance? Our team is ready to help you.
+                    Reach out to us through any of the following channels.
+                </p>
+
+                <div class="info-cards">
+                    <!-- Phone -->
+                    <div class="info-card">
+                        <div class="info-icon">📞</div>
+                        <div class="info-content">
+                            <h3>Phone</h3>
+                            <p><a href="tel:+60123456789">+60 12-345 6789</a></p>
+                            <p style="font-size: 0.9rem; margin-top: 0.3rem;">Mon-Sat: 9:00 AM - 8:00 PM</p>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="info-card">
+                        <div class="info-icon">✉️</div>
+                        <div class="info-content">
+                            <h3>Email</h3>
+                            <p><a href="mailto:support@careplus.com">support@careplus.com</a></p>
+                            <p style="font-size: 0.9rem; margin-top: 0.3rem;">We'll respond within 24 hours</p>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="info-card">
+                        <div class="info-icon">📍</div>
+                        <div class="info-content">
+                            <h3>Location</h3>
+                            <p>Klinik Careclinics<br>Ipoh, Perak<br>Malaysia</p>
+                        </div>
+                    </div>
+
+                    <!-- Hours -->
+                    <div class="info-card">
+                        <div class="info-icon">🕒</div>
+                        <div class="info-content">
+                            <h3>Office Hours</h3>
+                            <p>Monday - Saturday: 9:00 AM - 8:00 PM<br>
+                            Sunday: Closed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="contact-form">
+                <h2>Send Us a Message</h2>
+
+
+
+
+
+                <form method="POST" action="" id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" required
+                               value=""
+                               placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required
+                               value=""
+                               placeholder="your.email@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone"
+                               value=""
+                               placeholder="+60 12-345 6789">
+                        <small>Optional - for faster response</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject <span class="required">*</span></label>
+                        <select id="subject" name="subject" required>
+                            <option value="">Select a subject</option>
+                            <option value="general" >General Inquiry</option>
+                            <option value="appointment" >Appointment Help</option>
+                            <option value="technical" >Technical Support</option>
+                            <option value="billing" >Billing Question</option>
+                            <option value="feedback" >Feedback</option>
+                            <option value="other" >Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Message <span class="required">*</span></label>
+                        <textarea id="message" name="message" required
+                                  placeholder="Tell us how we can help you..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="map-section">
+    <div class="container">
+        <h2 style="font-size: 2.5rem; color: #1e293b; text-align: center; margin-bottom: 2rem; font-weight: 800;">Find Us</h2>
+        <div class="map-container">
+            <div class="map-responsive">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31816.902024006842!2d101.0727071743164!3d4.573760500000005!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31caec3401c4be25%3A0x8a57a41e76418dfe!2sKlinik%20Careclinics%20Ipoh!5e0!3m2!1sen!2smy!4v1766746059246!5m2!1sen!2smy"
+                    width="100%"
+                    height="450"
+                    style="border:0; border-radius: 15px;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+            <p style="text-align: center; color: #64748b; margin-top: 1.5rem; font-size: 1.05rem;">
+                📍 Klinik Careclinics, Ipoh, Perak, Malaysia
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About CarePlus</h3>
+                <p>Academic project demonstrating modern web technologies in healthcare management for small to medium-sized clinics in Malaysia.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="doctors.html">Our Doctors</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="security.html">Security</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 CarePlus. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- External JS -->
+
+
+<script src="demo.js" defer></script></body>
+</html>

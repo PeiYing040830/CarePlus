@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+.vscode/
+
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
