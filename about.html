@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="about.css">
 
 <link rel="stylesheet" href="headerNav.css"><link rel="stylesheet" href="demo.css"></head>
-<body><div class="demo-banner">CarePlus · Supabase edition · Dashboard cards and contact forms remain demos.</div><header class="guest-header"><nav class="guest-navbar">
+<body><div class="demo-banner">CarePlus - Clinic portal</div><header class="guest-header"><nav class="guest-navbar">
 <a class="guest-logo" href="index.html"><img src="logo.png" class="guest-logo-img" alt="CarePlus"><span class="guest-logo-text">CarePlus</span></a>
 <div class="guest-nav-right"><a href="about.html">About</a> · <a href="doctors.html">Doctors</a> · <a href="contact.html">Contact</a> · <a class="guest-btn guest-btn-login" href="login.html">Login</a></div>
 </nav></header>
@@ -83,7 +83,7 @@
                 <div class="value-icon">🔒</div>
                 <h3 class="value-title">Data Privacy & Security</h3>
                 <p class="value-text">
-                    Full compliance with PDPA 2010 and Act 586 regulations. Implementation of AES-256 encryption, bcrypt password hashing, and role-based access control (RBAC) to protect sensitive patient information.
+                    Supabase Auth and role-based database permissions protect account and clinic records.
                 </p>
             </div>
             <div class="value-card">
@@ -189,7 +189,7 @@
                         <h3 class="team-name">Backend Layer</h3>
                         <p class="team-role">Application Logic & Processing</p>
                         <p class="team-description">
-                            PHP server-side scripting for authentication, business rules, and data processing. Implementation of role-based access control (RBAC), input validation, and secure session management using industry best practices.
+                            Supabase Auth manages sign-in. PostgreSQL functions enforce business rules, and Row Level Security limits access according to the user and clinic role.
                         </p>
                     </div>
                 </div>
@@ -205,7 +205,7 @@
                         <h3 class="team-name">Database Layer</h3>
                         <p class="team-role">Data Storage & Management</p>
                         <p class="team-description">
-                            MySQL relational database with normalized schema design. AES-256 encryption for sensitive data, structured tables for users, appointments, medical records, prescriptions, and billing. Managed via phpMyAdmin.
+                            Supabase PostgreSQL stores users, appointments, medical records, prescriptions and billing records. Legacy records retain their original IDs. Profile images use private Supabase Storage.
                         </p>
                     </div>
                 </div>
@@ -251,7 +251,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 CarePlus. Academic Project | PDPA 2010 Compliant</p>
+            <p>&copy; 2026 CarePlus. Academic Project | Clinic Management Portal</p>
         </div>
     </div>
 </footer>

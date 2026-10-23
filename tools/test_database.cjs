@@ -1,0 +1,93 @@
+/* Isolated PostgreSQL/WASM tests using synthetic accounts only.
+   Install @electric-sql/pglite in ../.careplus-test-tools, then run this file. */
+const {PGlite}=require('../../.careplus-test-tools/node_modules/@electric-sql/pglite');
+const fs=require('node:fs');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+(async()=>{
+ const db=await PGlite.create();
+ await db.exec(`create role anon; create role authenticated;
+ create schema auth; create schema storage;
+ grant usage on schema auth,storage,public to anon,authenticated;
+ create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb default '{}'::jsonb);
+ create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+ create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+ create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+ alter table storage.objects enable row level security;
+ grant select,insert,delete on storage.objects to authenticated;
+ create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;`);
+ const dir=path.join(__dirname,'../supabase/migrations');
+ for(const file of fs.readdirSync(dir).sort())await db.exec(fs.readFileSync(path.join(dir,file),'utf8'));
+ console.log('All PostgreSQL migrations compile.');
+ const ids={patient:'00000000-0000-4000-8000-000000000001',other:'00000000-0000-4000-8000-000000000002',doctor:'00000000-0000-4000-8000-000000000003',admin:'00000000-0000-4000-8000-000000000004',unassigned:'00000000-0000-4000-8000-000000000005'};
+ for(const [name,id] of Object.entries(ids))await db.query(`insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)`,[id,name+'@example.test',JSON.stringify({display_name:name,role:'admin'})]);
+ let profiles=(await db.query('select * from public.profiles order by legacy_user_id')).rows;
+ assert(profiles.every(p=>p.role==='patient'),'Signup must ignore metadata role');
+ const byName=Object.fromEntries(profiles.map(p=>[p.display_name,p]));
+ const patientId=(await db.query('select patient_id from public.patients where user_id=$1',[byName.patient.legacy_user_id])).rows[0].patient_id;
+ for(const name of ['doctor','admin','unassigned']){
+  const role=name==='unassigned'?'doctor':name;
+  await db.query('update public.profiles set role=$1 where id=$2',[role,ids[name]]);
+  await db.query('update public.users set user_type=$1 where user_id=$2',[role,byName[name].legacy_user_id]);
+  await db.query('delete from public.patients where user_id=$1',[byName[name].legacy_user_id]);
+ }
+ const doctorId=(await db.query(`insert into public.doctors(user_id,first_name,last_name,license_number,phone,available_days,available_hours) values($1,'Test','Doctor','TEST','', '["Monday"]','09:00-17:00') returning doctor_id`,[byName.doctor.legacy_user_id])).rows[0].doctor_id;
+ const date=(await db.query(`select ((now() at time zone 'Asia/Kuala_Lumpur')::date+((8-extract(isodow from now() at time zone 'Asia/Kuala_Lumpur')::int)%7)+7)::text as date`)).rows[0].date;
+ async function as(name){await db.exec('reset role');await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[ids[name]||'']);await db.exec('set role '+(name?'authenticated':'anon'));}
+ async function action(name,data={}){return(await db.query('select public.careplus_action($1,$2::jsonb) as result',[name,JSON.stringify(data)])).rows[0].result;}
+ async function deny(fn,regex){await assert.rejects(fn,regex);}
+ await as('');
+ assert.equal((await db.query('select * from public.careplus_doctors()')).rows.length,1);
+ await deny(()=>db.query('select * from public.patients'),/permission denied/);
+ await deny(()=>action('book',{}),/Sign in/);
+ await action('contact',{name:'Test',email:'test@example.test',message:'Synthetic test'});
+ await as('patient');
+ assert.equal((await db.query('select * from public.patients')).rows.length,1);
+ await deny(()=>db.query(`update public.users set user_type='admin'`),/permission denied/);
+ await deny(()=>action('book',{doctor_id:doctorId,date,time:'08:00',reason:'test'}),/future 30-minute/);
+ const appointment=await action('book',{doctor_id:doctorId,date,time:'09:00',reason:'Synthetic test'});
+ await deny(()=>action('book',{doctor_id:doctorId,date,time:'09:00',reason:'test'}),/already booked/);
+ await deny(()=>action('payment',{appointment_id:appointment.id,amount:1,method:'cash'}),/administrators/);
+ await deny(()=>action('user_status',{user_id:byName.admin.legacy_user_id,status:'suspended'}),/Administrator/);
+ await action('confirm',{appointment_id:appointment.id});
+ await as('other');
+ assert.equal((await db.query('select * from public.appointments')).rows.length,0);
+ await deny(()=>action('cancel',{appointment_id:appointment.id}),/not found/);
+ await deny(()=>action('reschedule',{appointment_id:appointment.id,doctor_id:doctorId,date,time:'10:00'}),/cannot be rescheduled/);
+ await as('unassigned');
+ await deny(()=>action('cancel',{appointment_id:appointment.id}),/not found/);
+ await deny(()=>action('record',{appointment_id:appointment.id,diagnosis:'test'}),/assigned doctor/);
+ await as('doctor');
+ assert.equal((await db.query('select * from public.patients')).rows.length,1);
+ await action('record',{appointment_id:appointment.id,diagnosis:'Synthetic test only'});
+ await deny(()=>action('prescribe',{appointment_id:appointment.id,diagnosis:'test'}),/array/);
+ await action('prescribe',{appointment_id:appointment.id,diagnosis:'Synthetic test only',medications:[{name:'Synthetic medication'}]});
+ await deny(()=>action('complete',{appointment_id:appointment.id}),/check in/);
+ await as('other');
+ assert.equal((await db.query('select * from public.medical_records')).rows.length,0);
+ assert.equal((await db.query('select * from public.prescriptions')).rows.length,0);
+ await as('patient');
+ assert.equal((await db.query('select * from public.medical_records')).rows.length,1);
+ await deny(()=>action('review',{appointment_id:appointment.id,rating:5}),/completed/);
+ await action('profile',{display_name:'Changed',phone:'',address:''});
+ await deny(()=>db.query(`insert into storage.objects(bucket_id,name) values('careplus-uploads',$1)`,[ids.other+'/photo.png']),/row-level security/);
+ await db.query(`insert into storage.objects(bucket_id,name) values('careplus-uploads',$1)`,[ids.patient+'/photo.png']);
+ await as('other');
+ assert.equal((await db.query('select * from storage.objects')).rows.length,0);
+ await as('doctor');
+ assert.equal((await db.query('select * from storage.objects')).rows.length,1);
+ await as('admin');
+ await deny(()=>action('payment',{appointment_id:appointment.id,amount:-1,method:'cash'}),/Invalid/);
+ await action('payment',{appointment_id:appointment.id,amount:25,method:'cash'});
+ await deny(()=>action('payment',{appointment_id:appointment.id,amount:25,method:'cash'}),/Invalid/);
+ await action('user_status',{user_id:byName.patient.legacy_user_id,status:'suspended'});
+ await as('patient');
+ assert.equal((await db.query('select public.careplus_role() as role')).rows[0].role,null);
+ assert.equal((await db.query('select * from public.appointments')).rows.length,0);
+ await deny(()=>action('book',{doctor_id:doctorId,date,time:'10:00',reason:'test'}),/active account/);
+ await as('admin');await action('user_status',{user_id:byName.patient.legacy_user_id,status:'active'});
+ await as('patient');await action('cancel',{appointment_id:appointment.id});
+ assert.equal((await db.query('select status from public.appointments')).rows[0].status,'cancelled');
+ console.log('Passed: signup role isolation, ownership, assigned-doctor access, booking conflicts, clinical writes, payment permissions/idempotency, suspended accounts, contact and private storage RLS.');
+ await db.close();
+})().catch(error=>{console.error(error.message);process.exitCode=1;});

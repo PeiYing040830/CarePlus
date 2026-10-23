@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data: { user }, error } = await client.auth.getUser();
     if (error) throw error;
     if (!user) throw new Error('Please sign in first.');
-    const result = await client.from('profiles').select('role,display_name').eq('id', user.id).single();
+    const result = await client.from('profiles').select('role,display_name,legacy_user_id').eq('id', user.id).single();
     if (result.error) throw new Error('Profile unavailable. Run supabase/schema.sql in your project and check your profile.');
     if (!['patient', 'doctor', 'admin'].includes(result.data.role)) throw new Error('Unknown account role.');
     return { user, profile: result.data };
@@ -66,8 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profile.role !== portal.dataset.portal) { location.replace(profile.role + '.html'); return; }
         document.getElementById('account-name').textContent = profile.display_name || user.email;
         portal.hidden = false;
-        show('Signed in. Dashboard cards below still contain sample data.');
-        client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') location.replace('login.html'); });
+        const active = await client.rpc('careplus_role');
+        if (active.error) throw active.error;
+        if (!active.data) { portal.hidden = true; throw new Error('Your account is pending approval or inactive.'); }
+        show('Connected to the clinic database.');
+        window.dispatchEvent(new CustomEvent('careplus-ready', { detail: { client, user, profile } }));
+        client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { portal.hidden = true; location.replace('login.html'); } });
       } catch (error) {
         show(error.message + ' Use the Login link to continue.');
       }

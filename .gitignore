@@ -7,3 +7,8 @@ Thumbs.db
 !.env.example
 supabase/.temp/
 supabase/.branches/
+__pycache__/
+*.pyc
+node_modules/
+.migration-private/
+*.data.sql

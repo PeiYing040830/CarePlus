@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="doctors.css">
 
 <link rel="stylesheet" href="headerNav.css"><link rel="stylesheet" href="demo.css"></head>
-<body><div class="demo-banner">CarePlus · Supabase edition · Dashboard cards and contact forms remain demos.</div><header class="guest-header"><nav class="guest-navbar">
+<body><div class="demo-banner">CarePlus - Clinic portal</div><header class="guest-header"><nav class="guest-navbar">
 <a class="guest-logo" href="index.html"><img src="logo.png" class="guest-logo-img" alt="CarePlus"><span class="guest-logo-text">CarePlus</span></a>
 <div class="guest-nav-right"><a href="about.html">About</a> · <a href="doctors.html">Doctors</a> · <a href="contact.html">Contact</a> · <a class="guest-btn guest-btn-login" href="login.html">Login</a></div>
 </nav></header>
@@ -27,7 +27,7 @@
 <section class="doctors-section">
     <div class="container">
         <div class="doctors-grid" id="doctors-grid">
-            <div class="doctor-card"><div class="doctor-info"><h2>Sample Doctor</h2><p>General Practice · Demonstration profile</p><p>Doctor listings require the original database. This public copy contains no real doctor records.</p><a href="login.html">Explore portal demo</a></div></div>
+            <p role="status">Loading doctors...</p>
         </div>
 
         <div id="no-results-message" class="no-results" style="display: none;">
@@ -38,26 +38,7 @@
     </div>
 </section>
 
-<!-- Stats Section -->
-<section class="stats-section">
-    <div class="container">
-        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Why Choose Our Doctors</h2>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-number">+</div>
-                <div class="stat-label">Expert Doctors</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">15+</div>
-                <div class="stat-label">Specializations</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">98%</div>
-                <div class="stat-label">Satisfaction Rate</div>
-            </div>
-        </div>
-    </div>
-</section>
+
 
 <!-- Footer -->
 <footer class="footer">
@@ -93,5 +74,5 @@
 <!-- Load JavaScript Files -->
 
 
-<script src="demo.js" defer></script></body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script><script src="supabase-config.js" defer></script><script src="supabase-client.js" defer></script><script src="public.js" defer></script></body>
 </html>
