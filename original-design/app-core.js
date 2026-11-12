@@ -215,6 +215,10 @@ window.CarePlusOriginalContext=(data,page)=>{
  if(params.get('patient_id'))for(const key of ['medicalRecords','allRecords','prescriptions'])c[key]=c[key].filter(r=>String(r.patient_id)===params.get('patient_id'));
  if(params.get('doctor_id'))c.appointments=c.appointments.filter(r=>String(r.doctor_id)===params.get('doctor_id'));
  if(params.get('date'))c.appointments=c.appointments.filter(r=>r.appointment_date===params.get('date'));
+ if(page==='doctor/medicalRecords.html'){
+  c.filterDate=params.get('date')||'';c.filterPatient=params.get('patient_id')||'';
+  if(c.filterDate)for(const key of ['medicalRecords','allRecords'])c[key]=c[key].filter(r=>r.visit_date===c.filterDate);
+ }
  if(page==='admin/appointments.html'){
   c.doctorFilter=params.get('doctor')||'';
   c.appointments=c.appointments.filter(r=>(!c.doctorFilter||String(r.doctor_id)===c.doctorFilter)&&(!c.dateFrom||r.appointment_date>=c.dateFrom)&&(!c.dateTo||r.appointment_date<=c.dateTo));
