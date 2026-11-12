@@ -1,0 +1,48 @@
+/* Keep the portal title left-aligned and reserve space for the menu button. */
+.header > .navbar {
+    --portal-menu-size: 52px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--portal-menu-size);
+    align-items: center;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    gap: clamp(1rem, 2vw, 2rem);
+}
+
+.header > .navbar > .logo {
+    grid-column: 1;
+    grid-row: 1;
+    width: auto;
+    min-width: 0;
+    justify-content: flex-start;
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+}
+
+.header > .navbar .logo-img {
+    flex-shrink: 0;
+}
+
+.header > .navbar .logo-text {
+    min-width: 0;
+    font-size: clamp(1rem, 2.2vw, 2rem);
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+
+.header > .navbar > .mobile-menu-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    width: var(--portal-menu-size);
+    height: var(--portal-menu-size);
+    margin: 0;
+}
+
+@media (max-width: 480px) {
+    .header > .navbar {
+        --portal-menu-size: 46px;
+    }
+}

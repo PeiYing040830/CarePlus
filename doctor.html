@@ -1,7 +1,1 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Doctor portal ? CarePlus</title><link rel="stylesheet" href="headerNav.css"><link rel="stylesheet" href="demo.css"><link rel="stylesheet" href="portal.css"></head>
-<body><header class="guest-header"><nav class="guest-navbar"><a class="guest-logo" href="index.html"><img src="logo.png" class="guest-logo-img" alt="CarePlus"><span>CarePlus</span></a><a href="login.html">Login</a></nav></header>
-<p id="auth-status" class="demo-status" role="status" aria-live="polite">Checking your session?</p>
-<div data-portal="doctor" hidden><div class="portal-layout"><nav id="portal-nav" class="portal-nav" aria-label="Clinic modules"></nav><main class="portal-main"><div class="portal-top"><div><h1 id="module-title">Dashboard</h1><p>Doctor portal ? <span id="account-name"></span></p></div><div><button id="refresh" type="button">Refresh</button> <button id="logout" type="button" class="secondary">Sign out</button></div></div><p id="portal-status" class="portal-status" role="status" aria-live="polite">Loading live data?</p><section id="module-form"></section><section id="module-data"></section></main></div></div>
-<section id="receipt" class="receipt"></section>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script><script src="supabase-config.js" defer></script><script src="supabase-client.js" defer></script><script src="auth.js" defer></script><script src="portal.js" defer></script></body></html>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>CarePlus</title></head><body><script>location.replace("doctor/dashboard.html"+location.search+location.hash);</script></body></html>

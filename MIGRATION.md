@@ -25,3 +25,7 @@ New appointments use explicit staff completion rather than automatically marking
 ## Deployment verification
 
 All three migrations are recorded remotely. Auth Site URL and the confirmation/recovery redirect allowlist have been configured and verified for GitHub Pages and localhost:8080; unrelated Auth settings were preserved. A real user should verify sign-in with their old password and email recovery; no plaintext passwords were needed for migration.
+
+## November 13, 2026 update
+
+Migration 20261113000300 is deployed and recorded. Supabase contains 74,879 CDC ICD-10-CM FY2027 reference entries; the imported count was verified remotely. Server-side prototype screening now uses the 49 existing symptom rules, limited English negation/history matching, and emergency phrase overrides. The directory does not supply automatic diagnosis mappings. Results and rule provenance are stored for new submissions. Existing records were preserved. This prototype has not been clinically validated and does not establish 99% disease or symptom coverage.

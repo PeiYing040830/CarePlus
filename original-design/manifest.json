@@ -1,0 +1,166 @@
+{
+  "about.html": {
+    "original": "about.php",
+    "css": "about.css"
+  },
+  "chatbot.html": {
+    "original": "chatbot.php",
+    "css": "chatbot.css"
+  },
+  "contact.html": {
+    "original": "contact.php",
+    "css": "contact.css"
+  },
+  "doctors.html": {
+    "original": "doctors.php",
+    "css": "doctors.css"
+  },
+  "forgotPassword.html": {
+    "original": "forgotPassword.php",
+    "css": "forgotPassword.css"
+  },
+  "index.html": {
+    "original": "index.php",
+    "css": "index.css"
+  },
+  "login.html": {
+    "original": "login.php",
+    "css": "login.css"
+  },
+  "privacy.html": {
+    "original": "privacy.php",
+    "css": "privacy.css"
+  },
+  "registration.html": {
+    "original": "registration.php",
+    "css": "registration.css"
+  },
+  "security.html": {
+    "original": "security.php",
+    "css": "security.css"
+  },
+  "terms.html": {
+    "original": "terms.php",
+    "css": "terms.css"
+  },
+  "patient/appointment.html": {
+    "original": "patient/appointment.php",
+    "css": "patient/appointment.css"
+  },
+  "patient/chatbot.html": {
+    "original": "patient/chatbot.php",
+    "css": "patient/chatbot.css"
+  },
+  "patient/dashboard.html": {
+    "original": "patient/dashboard.php",
+    "css": "patient/dashboard.css"
+  },
+  "patient/diagnostic.html": {
+    "original": "patient/diagnostic.php",
+    "css": null
+  },
+  "patient/doctors.html": {
+    "original": "patient/doctors.php",
+    "css": "patient/doctors.css"
+  },
+  "patient/medicalRecords.html": {
+    "original": "patient/medicalRecords.php",
+    "css": "patient/medicalRecords.css"
+  },
+  "patient/notification.html": {
+    "original": "patient/notification.php",
+    "css": "patient/notification.css"
+  },
+  "patient/payment.html": {
+    "original": "patient/payment.php",
+    "css": "patient/payment.css"
+  },
+  "patient/prescription.html": {
+    "original": "patient/prescription.php",
+    "css": "patient/prescription.css"
+  },
+  "patient/profile.html": {
+    "original": "patient/profile.php",
+    "css": "patient/profile.css"
+  },
+  "patient/symptomChecker.html": {
+    "original": "patient/symptomChecker.php",
+    "css": "patient/symptomChecker.css"
+  },
+  "patient/view_qr.html": {
+    "original": "patient/view_qr.php",
+    "css": null
+  },
+  "doctor/appointments.html": {
+    "original": "doctor/appointments.php",
+    "css": "doctor/appointments.css"
+  },
+  "doctor/dashboard.html": {
+    "original": "doctor/dashboard.php",
+    "css": "doctor/dashboard.css"
+  },
+  "doctor/medicalRecords.html": {
+    "original": "doctor/medicalRecords.php",
+    "css": "doctor/medicalRecords.css"
+  },
+  "doctor/patients.html": {
+    "original": "doctor/patients.php",
+    "css": "doctor/patients.css"
+  },
+  "doctor/prescriptions.html": {
+    "original": "doctor/prescriptions.php",
+    "css": "doctor/prescriptions.css"
+  },
+  "doctor/prescription_logs.html": {
+    "original": "doctor/prescription_logs.php",
+    "css": null
+  },
+  "doctor/profile.html": {
+    "original": "doctor/profile.php",
+    "css": "doctor/profile.css"
+  },
+  "admin/activity.html": {
+    "original": "admin/activity.php",
+    "css": "admin/activity.css"
+  },
+  "admin/appointments.html": {
+    "original": "admin/appointments.php",
+    "css": "admin/appointments.css"
+  },
+  "admin/billing.html": {
+    "original": "admin/billing.php",
+    "css": "admin/billing.css"
+  },
+  "admin/dashboard.html": {
+    "original": "admin/dashboard.php",
+    "css": "admin/dashboard.css"
+  },
+  "admin/doctors.html": {
+    "original": "admin/doctors.php",
+    "css": "admin/doctors.css"
+  },
+  "admin/patients.html": {
+    "original": "admin/patients.php",
+    "css": "admin/patients.css"
+  },
+  "admin/profile.html": {
+    "original": "admin/profile.php",
+    "css": "admin/profile.css"
+  },
+  "admin/reports.html": {
+    "original": "admin/reports.php",
+    "css": "admin/reports.css"
+  },
+  "admin/scan_qr.html": {
+    "original": "admin/scan_qr.php",
+    "css": null
+  },
+  "admin/users.html": {
+    "original": "admin/users.php",
+    "css": "admin/users.css"
+  },
+  "admin/view_contact.html": {
+    "original": "admin/view_contact.php",
+    "css": null
+  }
+}
