@@ -224,13 +224,20 @@
   const group=document.createElement('div');group.className='form-group';
   const label=document.createElement('label');label.textContent='Appointment';label.htmlFor='clinicalAppointment';
   const select=document.createElement('select');select.name='appointment_id';select.id='clinicalAppointment';group.append(label,select);patient.parentElement.after(group);
+  const syncVisitDate=()=>{
+   const date=form.querySelector('[name="visit_date"]');
+   if(!date||form.querySelector('[name="record_id"]')?.value)return;
+   const appointment=context().appointments.find(a=>String(a.appointment_id)===select.value&&String(a.patient_id)===patient.value);
+   if(appointment)date.value=appointment.appointment_date;
+  };
   const refresh=()=>{
    const previous=select.value;select.replaceChildren(new Option('Choose an appointment…',''));
    const rows=context().appointments.filter(a=>String(a.patient_id)===patient.value&&['confirmed','completed'].includes(a.status));
    for(const a of rows)select.add(new Option('#'+a.appointment_id+' · '+a.appointment_date+' '+a.appointment_time,a.appointment_id));
    if(rows.some(a=>String(a.appointment_id)===previous))select.value=previous;else if(rows.length===1)select.value=rows[0].appointment_id;
+   syncVisitDate();
   };
-  patient.addEventListener('change',refresh);select.addEventListener('focus',refresh);refresh();
+  patient.addEventListener('change',refresh);select.addEventListener('focus',refresh);select.addEventListener('change',syncVisitDate);refresh();
  });
  document.addEventListener('click',async event=>{
   const link=event.target.closest?.('a[href*="update_contact_status.html"]');if(!link)return;
