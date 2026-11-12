@@ -1,0 +1,25 @@
+/* Preserve table-cell alignment; flex on a td breaks its row's border/height. */
+.container > .table-container {
+    max-width: 100%;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+.container > .table-container > table {
+    min-width: 1000px;
+}
+
+.table-container td.actions {
+    display: table-cell;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table-container td.actions > .btn-action {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.table-container td.actions > .btn-action:not(:last-child) {
+    margin-right: 8px;
+}

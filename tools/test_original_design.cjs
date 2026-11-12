@@ -7,6 +7,12 @@ for(const file of ['php-view-runtime','context','views'])w.eval(read('original-d
 w.CarePlusOriginalBase='https://example.test/CarePlus/';
 const manifest=JSON.parse(read('original-design/manifest.json'));
 const age=w.CarePlusViewPHP.ageParts;
+const php=w.CarePlusViewPHP;
+const today=php.call('date_create',['today'],{});
+assert(today>0,'PHP today must not resolve to the Unix epoch');
+assert.equal(php.date('Y-m-d',today),php.date('Y-m-d'));
+assert.equal(php.call('date_diff',[php.timestamp('2000-08-30'),today],{}).y,age('2000-08-30').years);
+assert.equal(php.call('date_diff',[php.timestamp('2000-08-30'),php.timestamp('2026-08-29')],{}).y,25);
 assert.deepEqual(JSON.parse(JSON.stringify(age('2000-08-30','2026-11-13'))),{years:26,months:2,days:14,total_days:9571});
 assert.equal(age('2000-08-30','2026-08-29').years,25);
 assert.equal(age('2000-08-30','2026-08-30').years,26);

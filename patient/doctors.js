@@ -25,7 +25,7 @@ async function viewDoctorDetails(doctorId) {
                 <div class="profile-header">
                     <div class="profile-image">
                         ${doctor.profile_picture ?
-                            `<img src="${doctor.profile_picture}" alt="Dr. ${doctor.name}">` :
+                            `<img src="${doctor.profile_picture}" alt="Dr. ${window.CarePlusViewPHP.escape(doctor.name)}">` :
                             `<div class="profile-placeholder"><span>👨‍⚕️</span></div>`
                         }
                         ${doctor.avg_rating > 0 ?
@@ -37,7 +37,7 @@ async function viewDoctorDetails(doctorId) {
                         }
                     </div>
                     <div class="profile-info">
-                        <h2>Dr. ${doctor.name}</h2>
+                        <h2>Dr. ${window.CarePlusViewPHP.escape(doctor.name)}</h2>
                         <p class="specialization">
                             <span class="icon">🏥</span>
                             ${doctor.specialization}
@@ -69,7 +69,7 @@ async function viewDoctorDetails(doctorId) {
                         <span class="icon">📞</span>
                         <div>
                             <span class="label">Phone</span>
-                            <span class="value">${doctor.phone}</span>
+                            <span class="value">${window.CarePlusViewPHP.escape(doctor.phone)}</span>
                         </div>
                     </div>
                     ${doctor.total_appointments > 0 ? `

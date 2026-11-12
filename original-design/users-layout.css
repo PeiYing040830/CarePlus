@@ -1,0 +1,32 @@
+/* Keep every user-table column reachable at every viewport size. */
+.container > .table-container {
+    max-width: 100%;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    scrollbar-width: auto;
+    scrollbar-color: #ff8c42 #fff5ee;
+}
+
+.container > .table-container .users-table {
+    min-width: 1100px;
+}
+
+.container > .table-container .users-table th:last-child,
+.container > .table-container .users-table td:last-child {
+    min-width: 150px;
+    white-space: nowrap;
+}
+
+.container > .table-container::-webkit-scrollbar {
+    height: 14px;
+}
+
+.container > .table-container::-webkit-scrollbar-track {
+    background: #fff5ee;
+}
+
+.container > .table-container::-webkit-scrollbar-thumb {
+    background: #ff8c42;
+    border: 3px solid #fff5ee;
+    border-radius: 10px;
+}

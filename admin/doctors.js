@@ -23,7 +23,7 @@ function editDoctor(doc) {
     // Show Image Preview
     const preview = document.getElementById('imagePreview');
     if (doc.profile_picture) {
-        preview.innerHTML = `<img src="../${doc.profile_picture}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
+        preview.innerHTML = `<img src="${window.CarePlusViewPHP.photoUrl(doc.profile_picture)}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
     } else {
         preview.innerHTML = `<span style="font-size: 2rem;">${doc.first_name.charAt(0)}</span>`;
     }
@@ -313,7 +313,7 @@ function toggleStatus(doctorId, currentStatus) {
 
 // Delete Doctor
 function deleteDoctor(userId, doctorName) {
-    if (confirm(`Are you sure you want to delete ${doctorName}? This action cannot be undone.`)) {
+    if (confirm(`Are you sure you want to deactivate ${doctorName}? The account will be disabled; its visit and payment history will be preserved.`)) {
         document.getElementById('delUserId').value = userId;
         document.getElementById('deleteForm').submit();
     }

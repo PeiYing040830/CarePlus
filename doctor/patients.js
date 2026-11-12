@@ -225,7 +225,7 @@
         // Handle Avatar (Image vs Initials)
         const avatarContainer = document.getElementById('modalAvatar');
         if (patient.profile_picture && patient.profile_picture !== '') {
-            avatarContainer.innerHTML = `<img src="../${patient.profile_picture}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            avatarContainer.innerHTML = `<img src="${window.CarePlusViewPHP.photoUrl(patient.profile_picture)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
         } else {
             avatarContainer.textContent = initials;
         }

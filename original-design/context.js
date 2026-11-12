@@ -5,10 +5,24 @@ window.CarePlusOriginalContext=(data,page)=>{
  const by=(rows,key,value)=>(rows||[]).find(r=>String(r[key])===String(value))||{};
  const users=t.users||[];
  const doctors=(data.directory||[]).map(d=>{const raw=by(t.doctors,'doctor_id',d.doctor_id);const words=d.name.split(' ');return {...d,first_name:words.slice(0,-1).join(' ')||words[0],last_name:words.length>1?words.at(-1):'',profile_picture:d.profile_picture||null,...raw,avg_rating:0,review_count:0,total_reviews:0};});
- for(const d of t.doctors||[])if(!doctors.some(x=>x.doctor_id===d.doctor_id))doctors.push({...d,avg_rating:0,review_count:0});
- const patients=(t.patients||[]).map(r=>({...r,email:by(users,'user_id',r.user_id).email||'',status:by(users,'user_id',r.user_id).status||'active',full_name:name(r),patient_name:name(r),age:r.date_of_birth?P.ageParts(r.date_of_birth,today).years:'',total_visits:(t.appointments||[]).filter(a=>a.patient_id===r.patient_id&&a.status==='completed').length}));
- const enrich=r=>{const d=by(doctors,'doctor_id',r.doctor_id),patient=by(patients,'patient_id',r.patient_id),a=by(t.appointments,'appointment_id',r.appointment_id);return {...a,...r,doctor_fname:d.first_name||'',doctor_lname:d.last_name||'',appointment_status:a.status||r.status,doctor_name:name(d),doctor_phone:d.phone||'',doctor_gender:d.gender||null,doctor_first_name:d.first_name,doctor_last_name:d.last_name,specialization:d.specialization,consultation_fee:d.consultation_fee,doctor_profile_picture:d.profile_picture,doctor_profile_pic:d.profile_picture,patient_fname:patient.first_name||'',patient_lname:patient.last_name||'',patient_first_name:patient.first_name,patient_last_name:patient.last_name,patient_name:name(patient),patient_phone:patient.phone,patient_email:patient.email,patient_ic:patient.ic_number,patient_dob:patient.date_of_birth,patient_gender:patient.gender,patient_profile_picture:patient.profile_picture,patient_profile_pic:patient.profile_picture,profile_picture:patient.profile_picture};};
- const appointments=(t.appointments||[]).map(enrich),records=(t.medical_records||[]).map(enrich),payments=(t.payments||[]).map(enrich),prescriptions=(t.prescriptions||[]).map(r=>({...enrich(r),medications:(()=>{let rows=r.medications_json;if(typeof rows==='string'){try{rows=JSON.parse(rows);}catch{rows=[];}}return Array.isArray(rows)?rows.filter(m=>m&&typeof m==='object').map(m=>({...m,name:m.name??m.medication_name??'',quantity:m.quantity??m.quantity_prescribed??null})):[];})(),medications_json:typeof r.medications_json==='object'?JSON.stringify(r.medications_json):r.medications_json}));
+ for(const d of t.doctors||[])if(!doctors.some(x=>String(x.doctor_id)===String(d.doctor_id)))doctors.push({...d,avg_rating:0,review_count:0});
+ for(const d of doctors){const ratings=(t.reviews||[]).filter(r=>String(r.doctor_id)===String(d.doctor_id));d.review_count=Number(d.rating_summary?.review_count??ratings.length);d.total_reviews=d.review_count;d.avg_rating=Number(d.rating_summary?.avg_rating??(ratings.length?ratings.reduce((sum,r)=>sum+Number(r.rating||0),0)/ratings.length:0));}
+ const activeDoctorId=by(doctors,'user_id',uid).doctor_id;
+ const patients=(t.patients||[]).map(r=>{
+  const visits=(t.appointments||[]).filter(a=>String(a.patient_id)===String(r.patient_id)&&a.status==='completed'&&a.appointment_date&&a.appointment_date<=today&&(role!=='doctor'||String(a.doctor_id)===String(activeDoctorId)));
+  const lastVisit=visits.map(a=>a.appointment_date).sort().at(-1)||null;
+  return {...r,email:by(users,'user_id',r.user_id).email||r.email||'',status:by(users,'user_id',r.user_id).status||'active',full_name:name(r),patient_name:name(r),age:r.date_of_birth?P.ageParts(r.date_of_birth,today).years:'',total_visits:visits.length,completed_visits:visits.length,last_visit:lastVisit};
+ });
+ const enrich=r=>{const d=by(doctors,'doctor_id',r.doctor_id),patient=by(patients,'patient_id',r.patient_id),a=by(t.appointments,'appointment_id',r.appointment_id);return {...a,...r,phone:patient.phone,email:patient.email,ic_number:patient.ic_number,blood_type:patient.blood_type,doctor_fname:d.first_name||'',doctor_lname:d.last_name||'',appointment_status:a.status||r.status,doctor_name:name(d),doctor_phone:d.phone||'',doctor_gender:d.gender||null,doctor_first_name:d.first_name,doctor_last_name:d.last_name,specialization:d.specialization,consultation_fee:d.consultation_fee,doctor_picture:d.profile_picture,doctor_profile_picture:d.profile_picture,doctor_profile_pic:d.profile_picture,patient_fname:patient.first_name||'',patient_lname:patient.last_name||'',patient_first_name:patient.first_name,patient_last_name:patient.last_name,patient_name:name(patient),patient_phone:patient.phone,patient_email:patient.email,patient_ic:patient.ic_number,patient_dob:patient.date_of_birth,patient_age:patient.age??null,age:patient.age??null,gender:patient.gender,date_of_birth:patient.date_of_birth,patient_gender:patient.gender,patient_profile_picture:patient.profile_picture,patient_profile_pic:patient.profile_picture,profile_picture:patient.profile_picture};};
+ const medicationRows=raw=>{
+  let rows=raw;if(typeof rows==='string'){try{rows=JSON.parse(rows);}catch{rows=[];}}
+  return Array.isArray(rows)?rows.filter(m=>m&&typeof m==='object').map(m=>{
+   const medicationName=m.name??m.medication_name??'',quantity=m.quantity??m.quantity_prescribed??null;
+   return {...m,name:medicationName,medication_name:medicationName,dosage:m.dosage??'',frequency:m.frequency??'',duration:m.duration??'',instructions:m.instructions??'',quantity,quantity_prescribed:quantity};
+  }):[];
+ };
+ const appointments=(t.appointments||[]).map(enrich),records=(t.medical_records||[]).map(enrich),payments=(t.payments||[]).map(enrich);
+ const prescriptions=(t.prescriptions||[]).map(r=>{const medications=medicationRows(r.medications_json);return {...enrich(r),medications,medication_count:medications.length,medications_json:JSON.stringify(medications)};});
  const me={...by(role==='doctor'?doctors:role==='admin'?t.admins:patients,'user_id',uid),...by(users,'user_id',uid),email:user.email||'',profile_picture:by(role==='doctor'?doctors:role==='admin'?t.admins:patients,'user_id',uid).profile_picture};
  const notifications=t.notifications||[],scopes=t.symptom_scope||[],checks=(t.symptom_checks||[]).map(r=>{const details=typeof r.analysis_details==='string'?JSON.parse(r.analysis_details||'null'):r.analysis_details;const scopes=Array.isArray(details)?details:details?.matched_scopes||[];return {...r,matched_symptoms:scopes.map(s=>s.symptom_name).filter(Boolean).join(', '),urgency_level:r.response==='Self-reported symptoms; no automated diagnosis performed.'?'unassessed':r.urgency_level};}),reviews=t.reviews||[];
  const group=(rows,fn)=>rows.reduce((a,r)=>{(a[fn(r)]??=[]).push(r);return a;},{});
@@ -48,6 +62,44 @@ window.CarePlusOriginalContext=(data,page)=>{
   securityQuestions:['What is your mother’s maiden name?','What was the name of your first pet?','What city were you born in?'],days:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],daysOfWeek:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],selectedDays:[],availableDays:me.available_days||[],availableStart:(me.available_hours||'09:00-17:00').split('-')[0],availableEnd:(me.available_hours||'09:00-17:00').split('-')[1],departments:['Administration','Finance','Operations'],currentDept:me.department||'',
   trendData:{labels:[],appointments:[],revenue:[]},viewingRecord:null,appointment:by(appointments,'appointment_id',params.get('id')),isExpired:false,qrAvailable:false,qrCodeUrl:'',qrCodeUrlDisplay:''
  };
+ if(role==='admin'){
+  const registration=(row,type)=>{const account=by(users,'user_id',row.user_id);return {type,id:row[type+'_id'],patient_name:type==='patient'?name(row):null,doctor_name:type==='doctor'?name(row):null,status:account.status||row.status||'pending',created_at:account.created_at||row.created_at||null,appointment_date:null,appointment_time:null,profile_image:row.profile_picture||null};};
+  const activities=[...appointments.map(a=>({type:'appointment',id:a.appointment_id,patient_name:a.patient_name,doctor_name:a.doctor_name,status:a.status,created_at:a.created_at,appointment_date:a.appointment_date,appointment_time:a.appointment_time,profile_image:null})),...doctors.map(r=>registration(r,'doctor')),...patients.map(r=>registration(r,'patient'))];
+  activities.sort((a,b)=>(b.created_at?P.timestamp(b.created_at):0)-(a.created_at?P.timestamp(a.created_at):0)||Number(b.id)-Number(a.id)||a.type.localeCompare(b.type));
+  c.recentActivity=activities;c.activityCount=activities.length;
+  if(page==='admin/activity.html'){
+   c.filterType=['appointment','doctor','patient'].includes(params.get('type'))?params.get('type'):'all';
+   const query=(params.get('search')||'').trim().toLowerCase();
+   const filtered=activities.filter(a=>{
+    const day=a.created_at?P.date('Y-m-d',P.timestamp(a.created_at)):'';
+    return (c.filterType==='all'||a.type===c.filterType)&&(!query||((a.patient_name||'')+' '+(a.doctor_name||'')).toLowerCase().includes(query))&&(!c.dateFrom||day>=c.dateFrom)&&(!c.dateTo||day<=c.dateTo);
+   });
+   c.totalActivities=filtered.length;c.totalPages=Math.max(1,Math.ceil(filtered.length/20));c.page=Math.min(c.totalPages,Math.max(1,parseInt(params.get('page'),10)||1));
+   c.startPage=Math.max(1,c.page-2);c.endPage=Math.min(c.totalPages,c.page+2);c.allActivities=filtered.slice((c.page-1)*20,c.page*20);
+   c.stats={...c.stats,appointment_count:appointments.length,doctor_count:doctors.length,patient_count:patients.length};
+  }
+ }
+ if(role==='admin'&&page==='admin/reports.html'){
+  const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')&&!Number.isNaN(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
+  const dates=appointments.map(a=>a.appointment_date).filter(validDate).sort();
+  if(!validDate(c.dateFrom)||!validDate(c.dateTo)){
+   c.dateFrom=dates.length?[today,dates[0]].sort()[0]:P.date('Y-m-01');
+   c.dateTo=dates.length?[today,dates.at(-1)].sort().at(-1):P.date('Y-m-t');
+  }
+  if(c.dateFrom>c.dateTo)[c.dateFrom,c.dateTo]=[c.dateTo,c.dateFrom];
+  c.reportType=['overview','appointments','doctors'].includes(params.get('report_type'))?params.get('report_type'):'overview';
+  const selected=appointments.filter(a=>a.appointment_date>=c.dateFrom&&a.appointment_date<=c.dateTo);
+  c.statistics={total_appointments:selected.length,completed_appointments:selected.filter(a=>a.status==='completed').length,cancelled_appointments:selected.filter(a=>a.status==='cancelled').length,total_patients:new Set(selected.map(a=>String(a.patient_id))).size};
+  const statuses=new Map(),trend=new Map();
+  for(const appointment of selected){
+   statuses.set(appointment.status,(statuses.get(appointment.status)||0)+1);
+   if(!trend.has(appointment.appointment_date))trend.set(appointment.appointment_date,{date:appointment.appointment_date,completed:0,confirmed:0,pending:0,cancelled:0});
+   const row=trend.get(appointment.appointment_date);if(appointment.status in row)row[appointment.status]++;
+  }
+  c.statuses=[...statuses].map(([status,count])=>({status,count}));
+  c.trendData=[...trend.values()].sort((a,b)=>a.date.localeCompare(b.date));
+  c.doctors=doctors.map(doctor=>{const visits=selected.filter(a=>String(a.doctor_id)===String(doctor.doctor_id));return {...doctor,appointment_count:visits.length,completed_count:visits.filter(a=>a.status==='completed').length,confirmed_count:visits.filter(a=>a.status==='confirmed').length};}).sort((a,b)=>b.appointment_count-a.appointment_count||name(a).localeCompare(name(b))).slice(0,10);
+ }
  if(page==='patient/payment.html'){
   c.appointments=appointments.map(a=>{
    const candidates=payments.filter(p=>String(p.appointment_id)===String(a.appointment_id)).sort((x,y)=>Number(y.payment_id)-Number(x.payment_id));
@@ -65,9 +117,39 @@ window.CarePlusOriginalContext=(data,page)=>{
   c.completedCount=c.appointments.filter(a=>a.appointment_status==='completed').length;
   c.eligibleReviews=c.appointments.filter(a=>a.appointment_status==='completed'&&!a.review_id);c.pendingReviewCount=c.eligibleReviews.length;
  }
+ if(page==='doctor/patients.html')c.totalVisits=c.patients.reduce((sum,patient)=>sum+patient.total_visits,0);
+ if(page==='admin/view_contact.html')c.submissions=c.submissions.map(r=>({...r,id:r.contact_id}));
+ if(page==='patient/view_qr.html'){
+  const a=c.appointment,visit=P.timestamp((a.appointment_date||'')+' '+(a.appointment_time||''));
+  c.isExpired=!!visit&&now>visit+3600;
+  c.qrAvailable=!!a.qr_code&&a.status==='confirmed'&&now>=visit-86400&&now<=visit+3600;
+  if(!c.qrAvailable)c.message=!a.appointment_id?'Appointment not found.':a.status!=='confirmed'?'Confirm the appointment before viewing its QR code.':c.isExpired?'The QR check-in window has expired.':'QR code will be available 24 hours before the appointment.';
+ }
+ if(page==='doctor/prescription_logs.html'){
+  c.logs=(t.prescription_logs||[]).slice().sort((a,b)=>P.timestamp(b.created_at)-P.timestamp(a.created_at)).slice(0,100);
+  for(const action of ['create','view','print','error'])c[action+'Count']=c.logs.filter(log=>log.action===action).length;
+ }
  // Preserve the original per-page record filters, without altering its markup.
  const search=(params.get('search')||'').toLowerCase(),status=params.get('status');
  if(search)for(const key of ['appointments','medicalRecords','allRecords','doctors','patients','users','payments'])c[key]=c[key].filter(r=>JSON.stringify(r).toLowerCase().includes(search));
  if(status&&status!=='all')for(const key of ['appointments','prescriptions','users'])c[key]=c[key].filter(r=>r.status===status);
+ if(params.get('role')&&params.get('role')!=='all')c.users=c.users.filter(r=>r.user_type===params.get('role'));
+ if(params.get('patient_id'))for(const key of ['medicalRecords','allRecords','prescriptions'])c[key]=c[key].filter(r=>String(r.patient_id)===params.get('patient_id'));
+ if(params.get('doctor_id'))c.appointments=c.appointments.filter(r=>String(r.doctor_id)===params.get('doctor_id'));
+ if(params.get('date'))c.appointments=c.appointments.filter(r=>r.appointment_date===params.get('date'));
+ if(page==='admin/appointments.html'){
+  c.doctorFilter=params.get('doctor')||'';
+  c.appointments=c.appointments.filter(r=>(!c.doctorFilter||String(r.doctor_id)===c.doctorFilter)&&(!c.dateFrom||r.appointment_date>=c.dateFrom)&&(!c.dateTo||r.appointment_date<=c.dateTo));
+ }
+ if(page==='admin/billing.html'){
+  c.methodFilter=params.get('method')||'';
+  c.payments=c.payments.filter(r=>(!status||status==='all'||r.payment_status===status)&&(!c.methodFilter||r.payment_method===c.methodFilter)&&(!c.dateFrom||(r.payment_date||'').slice(0,10)>=c.dateFrom)&&(!c.dateTo||(r.payment_date||'').slice(0,10)<=c.dateTo));
+ }
+ if(page==='admin/doctors.html'){c.specFilter=params.get('specialization')||'';if(c.specFilter)c.doctors=c.doctors.filter(r=>r.specialization===c.specFilter);}
+ if(page==='admin/patients.html'){
+  c.genderFilter=params.get('gender')||'';c.bloodTypeFilter=params.get('blood_type')||'';
+  c.patients=c.patients.filter(r=>(!c.genderFilter||r.gender===c.genderFilter)&&(!c.bloodTypeFilter||r.blood_type===c.bloodTypeFilter));
+  c.stats.blood_types=new Set(patients.map(r=>r.blood_type).filter(Boolean)).size;
+ }
  return c;
 };

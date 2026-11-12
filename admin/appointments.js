@@ -351,7 +351,7 @@ function closeStatusModal() {
 }
 
 function deleteAppointment(appointmentId, patientName) {
-    if (confirm(`Are you sure you want to delete the appointment for ${patientName}? This action cannot be undone.`)) {
+    if (confirm(`Are you sure you want to cancel the appointment for ${patientName}? The appointment will remain in the visit history.`)) {
         document.getElementById('delAppointmentId').value = appointmentId;
         document.getElementById('deleteForm').submit();
     }

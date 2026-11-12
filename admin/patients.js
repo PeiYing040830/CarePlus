@@ -21,7 +21,7 @@ function editPatient(patient) {
     // Preview Current Image
     const preview = document.getElementById('imagePreview');
     if (patient.profile_picture) {
-        preview.innerHTML = `<img src="../${patient.profile_picture}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
+        preview.innerHTML = `<img src="${window.CarePlusViewPHP.photoUrl(patient.profile_picture)}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">`;
     } else {
         preview.innerHTML = `<span>${patient.first_name.charAt(0)}</span>`;
     }
@@ -91,7 +91,7 @@ document.getElementById('phone').addEventListener('input', function(e) {
 
 // System Actions
 function deletePatient(userId, patientName) {
-    if (confirm(`Are you sure you want to delete ${patientName}?`)) {
+    if (confirm(`Are you sure you want to deactivate ${patientName}?`)) {
         document.getElementById('delUserId').value = userId;
         document.getElementById('deleteForm').submit();
     }

@@ -57,8 +57,8 @@ async function viewPrescriptionDetails(prescriptionId) {
                     <div class="doctor-info-grid">
                         <div class="doctor-image-container">
                             ${prescription.doctor_profile_picture ? `
-                                <img src="${prescription.doctor_profile_picture}"
-                                     alt="Dr. ${prescription.doctor_name}"
+                                <img src="${window.CarePlusViewPHP.photoUrl(prescription.doctor_profile_picture)}"
+                                     alt="Dr. ${window.CarePlusViewPHP.escape(prescription.doctor_name)}"
                                      class="doctor-modal-image"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                 <div class="doctor-fallback-avatar" style="display: none;">
@@ -73,7 +73,7 @@ async function viewPrescriptionDetails(prescriptionId) {
                         <div class="info-grid">
                             <div class="info-item">
                                 <span class="label">Doctor:</span>
-                                <span class="value">Dr. ${prescription.doctor_name}</span>
+                                <span class="value">Dr. ${window.CarePlusViewPHP.escape(prescription.doctor_name)}</span>
                             </div>
                             <div class="info-item">
                                 <span class="label">Specialization:</span>
@@ -90,7 +90,7 @@ async function viewPrescriptionDetails(prescriptionId) {
                 <!-- Diagnosis -->
                 <div class="detail-section diagnosis">
                     <h3>🔍 Diagnosis</h3>
-                    <p>${prescription.diagnosis}</p>
+                    <p>${window.CarePlusViewPHP.escape(prescription.diagnosis)}</p>
                 </div>
 
                 <!-- Medications -->
@@ -102,25 +102,25 @@ async function viewPrescriptionDetails(prescriptionId) {
                                     <div class="med-number">${index + 1}</div>
                                     <div class="med-content">
                                         <div class="med-header">
-                                            <h4>${med.name || 'N/A'}</h4>
-                                            <span class="dosage-badge">${med.dosage || 'N/A'}</span>
+                                            <h4>${window.CarePlusViewPHP.escape(med.name || 'N/A')}</h4>
+                                            <span class="dosage-badge">${window.CarePlusViewPHP.escape(med.dosage || 'N/A')}</span>
                                         </div>
                                         <div class="med-info">
                                             <div class="med-row">
                                                 <span class="icon">⏰</span>
                                                 <span class="label">Frequency:</span>
-                                                <span class="value">${med.frequency || 'N/A'}</span>
+                                                <span class="value">${window.CarePlusViewPHP.escape(med.frequency || 'N/A')}</span>
                                             </div>
                                             <div class="med-row">
                                                 <span class="icon">📆</span>
                                                 <span class="label">Duration:</span>
-                                                <span class="value">${med.duration || 'N/A'}</span>
+                                                <span class="value">${window.CarePlusViewPHP.escape(med.duration || 'N/A')}</span>
                                             </div>
                                             ${med.instructions ? `
                                                 <div class="med-row instructions">
                                                     <span class="icon">📝</span>
                                                     <span class="label">Instructions:</span>
-                                                    <span class="value">${med.instructions}</span>
+                                                    <span class="value">${window.CarePlusViewPHP.escape(med.instructions)}</span>
                                                 </div>
                                             ` : ''}
                                         </div>
@@ -133,7 +133,7 @@ async function viewPrescriptionDetails(prescriptionId) {
                 ${prescription.notes ? `
                     <div class="detail-section notes">
                         <h3>📌 Additional Notes</h3>
-                        <p>${prescription.notes.replace(/\n/g, '<br>')}</p>
+                        <p>${window.CarePlusViewPHP.escape(prescription.notes).replace(/\n/g, '<br>')}</p>
                     </div>
                 ` : ''}
             </div>

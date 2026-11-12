@@ -401,27 +401,22 @@ function updateRelativeTimes() {
 }
 
 // Highlight search terms
+/* Compiled into the original activity script; match literal search text safely. */
 function highlightSearchTerms() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchTerm = urlParams.get('search');
-
-    if (!searchTerm) return;
-
-    const activityCards = document.querySelectorAll('.activity-card');
-
-    activityCards.forEach(card => {
-        const textElements = card.querySelectorAll('.activity-title, .activity-detail');
-
-        textElements.forEach(element => {
-            const text = element.textContent;
-            const regex = new RegExp(`(${searchTerm})`, 'gi');
-
-            if (regex.test(text)) {
-                element.innerHTML = text.replace(regex, '<mark style="background: #fff59d; padding: 0 2px;">$1</mark>');
-            }
-        });
-    });
+ const term=new URLSearchParams(location.search).get('search');if(!term)return;
+ const needle=term.toLowerCase();
+ for(const element of document.querySelectorAll('.activity-card .activity-title, .activity-card .activity-detail')){
+  const text=element.textContent,lower=text.toLowerCase(),fragment=document.createDocumentFragment();
+  let offset=0,index=lower.indexOf(needle);
+  while(index!==-1){
+   fragment.append(document.createTextNode(text.slice(offset,index)));
+   const mark=document.createElement('mark');mark.textContent=text.slice(index,index+term.length);fragment.append(mark);
+   offset=index+term.length;index=lower.indexOf(needle,offset);
+  }
+  fragment.append(document.createTextNode(text.slice(offset)));element.replaceChildren(fragment);
+ }
 }
+
 
 // Add loading state to filter form
 function initFilterLoadingState() {
@@ -670,7 +665,7 @@ function displayDoctorDetails(doctor) {
     const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=FF8C42&color=fff`;
 
     let imgPath = (doctor.profile_image || doctor.profile_picture)
-                  ? '../' + (doctor.profile_image || doctor.profile_picture)
+                  ? window.CarePlusViewPHP.photoUrl(doctor.profile_image || doctor.profile_picture)
                   : fallback;
 
     modalTitle.innerHTML = '<span>👨‍⚕️</span> Doctor Profile';
@@ -749,7 +744,7 @@ function displayDoctorDetails(doctor) {
 function displayPatientDetails(patient) {
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
-    const imgPath = patient.profile_image ? '../' + patient.profile_image : '../assets/default-patient.png';
+    const imgPath = patient.profile_image ? window.CarePlusViewPHP.photoUrl(patient.profile_image) : '../assets/default-patient.png';
 
     modalTitle.innerHTML = '<span>🤒</span> Patient Profile';
     modalBody.innerHTML = `

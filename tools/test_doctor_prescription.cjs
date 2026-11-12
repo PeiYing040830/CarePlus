@@ -1,0 +1,24 @@
+﻿const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM,requestInterceptor,VirtualConsole}=require('../../.careplus-test-tools/node_modules/jsdom');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const signed=p=>'https://images.example.test/storage/v1/object/sign/careplus-uploads/'+p+'?token=test';
+const patientPhoto=signed('patient-uuid/profile.png');
+const tables={users:[{user_id:1,email:'doctor@example.test'},{user_id:2,email:'patient@example.test'}],doctors:[{doctor_id:1,user_id:1,first_name:'Test',last_name:'Doctor',profile_picture:'doctor-uuid/profile.png'}],patients:[{patient_id:2,user_id:2,first_name:'Test',last_name:'Patient',date_of_birth:'2000-08-30',gender:'female',profile_picture:'patient-uuid/profile.png'}],appointments:[{appointment_id:1,patient_id:2,doctor_id:1,status:'completed',appointment_date:'2026-11-13',appointment_time:'09:00:00'}],prescriptions:[{prescription_id:3,patient_id:2,doctor_id:1,appointment_id:1,status:'active',diagnosis:'Synthetic diagnosis',medications_json:[{name:'Synthetic medication',quantity:4}],prescription_date:'2026-11-13',valid_until:'2026-12-13',verification_code:'TEST'}]};
+const client={auth:{getSession:async()=>({data:{session:{user:{id:'doctor-uuid'}}}}),getUser:async()=>({data:{user:{id:'doctor-uuid'}}})},from:name=>({select:()=>({eq:()=>({single:async()=>({data:{role:'doctor',legacy_user_id:1,display_name:'Test Doctor'}})}),limit:async()=>({data:structuredClone(tables[name]||[])})})}),rpc:async name=>({data:name==='careplus_role'?'doctor':[]}),storage:{from:()=>({createSignedUrl:async p=>({data:{signedUrl:signed(p)}})})}};
+const resources={interceptors:[requestInterceptor(request=>{const u=new URL(request.url),type=u.pathname.endsWith('.css')?'text/css':'application/javascript';return new Response(u.origin==='http://127.0.0.1:8080'?fs.readFileSync(path.join(root,u.pathname)):'',{headers:{'content-type':type}});})]};
+(async()=>{
+ const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>{if(e.type!=='not-implemented')errors.push(e.message);});
+ const dom=new JSDOM(read('doctor/prescriptions.html'),{url:'http://127.0.0.1:8080/doctor/prescriptions.html',runScripts:'dangerously',resources,virtualConsole:vc,beforeParse(w){w.supabase={createClient:()=>client};w.Response=Response;w.fetch=async()=>new Response('{}');w.HTMLElement.prototype.scrollIntoView=()=>{};}}),w=dom.window;
+ for(let i=0;i<100&&!w.document.querySelector('.btn-view');i++)await new Promise(r=>setTimeout(r,10));
+ await new Promise(r=>setTimeout(r,40));
+ const card=w.document.querySelector('.prescription-card');assert(card);assert.equal(card.querySelector('.patient-avatar img').src,patientPhoto);
+ const age=w.CarePlusViewPHP.ageParts('2000-08-30').years;assert(card.querySelector('.patient-meta').textContent.includes(age+' years'));
+ const option=w.document.querySelector('#patientSelect option[value="2"]');assert(option);assert.equal(option.dataset.photo,patientPhoto);
+ card.querySelector('.btn-view').click();
+ for(let i=0;i<100&&!w.document.querySelector('.modal-patient-avatar img');i++)await new Promise(r=>setTimeout(r,10));
+ assert.equal(w.document.querySelector('.modal-patient-avatar img').src,patientPhoto);
+ assert(w.document.querySelector('.modal-patient-info').textContent.includes(age+' years'));
+ assert(!w.document.getElementById('prescriptionDetails').textContent.includes('undefined'));
+ assert(w.document.getElementById('prescriptionDetails').textContent.includes('Synthetic medication'));
+ assert.deepEqual(errors,[]);dom.window.close();console.log('Passed: full Doctor prescriptions page, patient photo on card/modal/selector, calendar age, gender and medication aliases.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

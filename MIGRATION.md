@@ -29,3 +29,10 @@ All three migrations are recorded remotely. Auth Site URL and the confirmation/r
 ## November 13, 2026 update
 
 Migration 20261113000300 is deployed and recorded. Supabase contains 74,879 CDC ICD-10-CM FY2027 reference entries; the imported count was verified remotely. Server-side prototype screening now uses the 49 existing symptom rules, limited English negation/history matching, and emergency phrase overrides. The directory does not supply automatic diagnosis mappings. Results and rule provenance are stored for new submissions. Existing records were preserved. This prototype has not been clinically validated and does not establish 99% disease or symptom coverage.
+
+
+## Portal audit follow-up
+
+Migrations 20261113000400?20261113000900 have been applied and recorded. Read-only remote checks found all eight new/current portal entry functions, two doctor-rating summaries and two patients visible to the assigned doctor. Existing clinical and payment rows were not rewritten. New prescription/payment audit tables start empty and record subsequent real operations; no historical activity was invented.
+
+QR scanning requests are now connected to staff-only check-in. Actual camera hardware/permissions and real email delivery remain manual verification steps. Booking/rescheduling, clinical creation/amendments, profile fields/photos, notification deletion, review editing, admin management and billing were checked with synthetic PostgreSQL and DOM tests. All 30 portal HTML entries booted without script exceptions, and all 41 original templates rendered with empty and populated fixtures.

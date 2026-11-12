@@ -1,0 +1,26 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM,VirtualConsole}=require('../../.careplus-test-tools/node_modules/jsdom');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+(async()=>{
+ const dom=new JSDOM('',{url:'http://127.0.0.1:8080/patient/appointment.html',runScripts:'outside-only',virtualConsole:new VirtualConsole()}),w=dom.window;
+ for(const file of ['php-view-runtime','context'])w.eval(read('original-design/'+file+'.js'));
+ const calls=[],state={page:'patient/appointment.html',tables:{appointments:[{appointment_id:7,doctor_id:2,patient_id:3,status:'confirmed'}],patients:[{patient_id:3}],doctors:[{doctor_id:2,user_id:4}]},profile:{role:'patient'},user:{},directory:[],client:{rpc:async(name,args)=>{calls.push({name,args});return {data:{id:7}};}}};
+ w.CarePlusOriginalData=state;w.fetch=async()=>{throw Error('Unmapped native request');};w.Response=Response;w.eval(read('original-design/bridge.js'));
+ const post=async(url,data)=>(await w.fetch(url,{method:'POST',body:JSON.stringify(data)})).json();
+ assert((await post('appointment.html',{action:'reschedule_appointment',appointment_id:7,new_date:'2026-12-01',new_time:'10:00'})).success);
+ assert.equal(calls.at(-1).args.p_data.doctor_id,2);assert.equal(calls.at(-1).args.p_data.time,'10:00');
+ assert((await post('notification.html',{action:'delete',notification_id:1})).success);assert.equal(calls.at(-1).args.p_action,'delete_notification');
+ state.profile.role='doctor';
+ assert((await post('prescriptions.html',{action:'create_prescription',patient_id:3,diagnosis:'Synthetic',medications:JSON.stringify([{name:'Synthetic medication'}])})).success);
+ assert.equal(calls.at(-1).args.p_action,'prescribe');assert(Array.isArray(calls.at(-1).args.p_data.medications));assert.equal(calls.at(-1).args.p_data.appointment_id,7);
+ assert((await post('add_medical_record.html',{appointment_id:7,patient_id:3,diagnosis:'Synthetic',prescription:'Synthetic text'})).success);assert.equal(calls.at(-1).name,'careplus_save_record');assert.equal(calls.at(-1).args.p_data.prescription,'Synthetic text');
+ assert((await post('checkin_qr.html',{qr_code:'synthetic-qr'})).success);assert.equal(calls.at(-1).args.p_action,'checkin_qr');
+ state.profile.role='admin';
+ assert((await post('users.html',{action:'edit',user_id:1,first_name:'Synthetic',last_name:'User'})).success);assert.equal(calls.at(-1).name,'careplus_admin_manage');
+ assert((await post('ajax/approve_doctor.html',{doctor_id:2})).success);assert.equal(calls.at(-1).args.p_data.user_id,4);
+ assert((await post('billing.html',{action:'add',patient_id:3,amount:12,'items[0][description]':'Synthetic service','items[0][amount]':'12'})).success);assert.equal(calls.at(-1).name,'careplus_save_payment');assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1).args.p_data.items)),[{item:'Synthetic service',price:12}]);
+ w.document.body.innerHTML='<form method="post" id="profileForm"><input name="available_days[]" value="Monday"><input name="available_days[]" value="Wednesday"><button type="submit">Save</button></form>';
+ state.profile.role='doctor';w.document.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await new Promise(r=>setTimeout(r,0));
+ assert.deepEqual(Array.from(calls.at(-1).args.p_data.available_days),['Monday','Wednesday']);
+ dom.window.close();console.log('Passed: reschedule doctor ID, notification deletion, prescription arrays/appointment, record text, QR, admin edits/approval, billing items and repeated schedule fields.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

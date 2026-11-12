@@ -69,18 +69,22 @@ function stmt(n){
 function header(file){
  let s=fs.readFileSync(file,'utf8');if(s.startsWith('<?php'))s=s.slice(s.indexOf('?>')+2);
  if(['patient','doctor','admin'].includes(path.basename(path.dirname(file))))s=s.replace(/(<link\b[^>]*href="headerNav\.css[^\"]*"[^>]*>)/,'$1\n<link rel="stylesheet" href="../original-design/header-layout.css">');
+ if(path.basename(path.dirname(file))==='admin')s=s.replace('<link rel="stylesheet" href="../original-design/header-layout.css">','<link rel="stylesheet" href="../original-design/header-layout.css"><link rel="stylesheet" href="../original-design/admin-tables.css">');
  // Remove the invalid second document wrapper in the original guest header.
  return s.replace(/<!doctype[^>]*>|<\/?(?:html|head|body)\b[^>]*>|<meta\b[^>]*>/gi,'');
 }
 function source(file){
  const s=fs.readFileSync(file,'utf8');const start=s.search(/<!doctype/i);if(start<0)return null;
  let markup=path.basename(file)==='terms.php'?s.slice(start).replace('src="services.js"','src="terms.js"'):s.slice(start);
+ if(path.basename(file)==='reports.php'&&path.basename(path.dirname(file))==='admin')markup=markup.replace('<!-- Statistics Cards -->','<?php if ($statistics[\'total_appointments\'] === 0): ?><p class="report-empty" role="status">No appointments were found in the selected date range.</p><?php endif; ?><!-- Statistics Cards -->');
+ if(path.basename(file)==='users.php'&&path.basename(path.dirname(file))==='admin')markup=markup.replace('</head>','<link rel="stylesheet" href="../original-design/users-layout.css"></head>').replace('<div class="table-container">','<div class="table-container" tabindex="0" role="region" aria-label="User table: scroll horizontally to see all columns">');
  // Supabase recovers accounts by email; omit the old security-question section.
  if(path.basename(file)==='registration.php'){
   const section=/<h3 class="section-title">[^<]*Account Recovery Setup<\/h3>[\s\S]*?(?=<h3 class="section-title">Personal Information<\/h3>)/;
   if(!section.test(markup))throw new Error('Legacy registration recovery section not found.');
   markup=markup.replace(section,'');
  }
+ if(path.basename(file)==='diagnostic.php'&&path.basename(path.dirname(file))==='patient')markup=markup.replace('Diagnostic Scope Management','Symptom Screening Reference').replace('Control symptom checker responses and diagnostic guidelines','View the existing symptom screening rules').replace(/<!-- Add New Symptom Scope -->[\s\S]*?(?=<!-- Existing Symptom Scopes -->)/,'').replace(/<div class="scope-actions">[\s\S]*?<\/div>/g,'');
  if(path.basename(file)==='dashboard.php'&&path.basename(path.dirname(file))==='patient')markup=markup.replace(/\$cleanImageName = ltrim[\s\S]*?\$hasImage = file_exists\(\$serverPath\);/,"$imagePath = $doctor['profile_picture']; $hasImage = file_exists($imagePath);");
  if(path.basename(file)==='appointment.php'&&path.basename(path.dirname(file))==='patient')markup=markup.replace(/\$profilePicturePath = [\s\S]*?(?=\?>)/,"$displayPath = $doctor['profile_picture'] ?? null;\n");
  markup=markup.replace(/\$imagePath = '\.\.\/' \. \$doctor\['profile_picture'\];/g,"$imagePath = $doctor['profile_picture'];").replace("file_exists(__DIR__ . '/' . $imagePath)","file_exists($imagePath)");
@@ -93,6 +97,11 @@ function source(file){
    const variable=tag.includes('$review[')?'review':'apt';
    return 'onclick="'+(fn==='editReview'?'editReviewByAppointment':fn==='viewPaymentDetails'?'viewPaymentByAppointment':'openReviewByAppointment')+'(<?php echo (int)$'+variable+'[\'appointment_id\']; ?>)"';
   });
+ }
+ if(path.basename(file)==='prescription.php'&&path.basename(path.dirname(file))==='patient'){
+  markup=markup.replace("!empty($prescription['doctor_profile_picture']) && file_exists(__DIR__ . '/../' . $prescription['doctor_profile_picture'])","!empty($prescription['doctor_profile_picture'])");
+  markup=markup.replace("src=\"../<?php echo htmlspecialchars($prescription['doctor_profile_picture']); ?>\"","src=\"<?php echo htmlspecialchars($prescription['doctor_profile_picture']); ?>\"");
+  markup=markup.replace('</head>','<script src="../original-design/prescription-photos.js" defer></script></head>');
  }
  // Some legacy pages reference stylesheets that never existed; their styles are inline.
  markup=markup.replace(/<link\b[^>]*href="([^"\n]+\.css)"[^>]*>/gi,(tag,href)=>/^https?:|^\/\//.test(href)||fs.existsSync(path.resolve(path.dirname(file),href))?tag:'');
@@ -111,7 +120,13 @@ for(const dir of ['','patient','doctor','admin'])for(const name of fs.readdirSyn
 let bundle='/* Generated solely from original XAMPP view markup. No records or server code. */\nwindow.CarePlusOriginalViews={};\n';
 for(const item of files){
  try{
-  const ast=parser.parseCode(item.source,item.file);const compiled=stmt(ast);
+  let viewSource=item.source;
+  if(item.name==='admin/scan_qr.html')viewSource=viewSource.replace('maxlength="16"','maxlength="255"').replaceAll('.trim().toUpperCase()', '.trim()');
+  if(['admin/users.html','admin/patients.html','admin/doctors.html'].includes(item.name))viewSource=viewSource.replaceAll('title="Delete"','title="Deactivate account"');
+  if(item.name==='admin/appointments.html')viewSource=viewSource.replaceAll('title="Delete"','title="Cancel appointment"');
+  if(item.name==='admin/view_contact.html')viewSource=viewSource.replaceAll('Mark Replied','Mark Closed').replaceAll('Mark this as replied?','Mark this as closed?');
+  if(item.name==='patient/view_qr.html')viewSource=viewSource.replace(/<img src="<\?php echo htmlspecialchars\(\$qrCodeUrlDisplay\); \?>"[\s\S]*?loading="lazy">/,'<div id="qrCodeImage"></div>').replace('</body>','<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script>const qrNode=document.getElementById("qrCodeImage");if(qrNode&&window.QRCode){new QRCode(qrNode,{text:window.CarePlusOriginalContext(window.CarePlusOriginalData,"patient/view_qr.html").appointment.qr_code,width:300,height:300});const download=document.querySelector("a[download]");download?.addEventListener("click",()=>{download.href=qrNode.querySelector("canvas").toDataURL("image/png");});}</script></body>');
+  const ast=parser.parseCode(viewSource,item.file);const compiled=stmt(ast);
   bundle+='window.CarePlusOriginalViews['+j(item.name)+']=function(c,p){let html="";'+compiled+';return html;};\n';
  }catch(error){throw new Error(item.name+': '+error.message);}
 }
@@ -124,6 +139,18 @@ for(const item of files){
  for(const name of fs.readdirSync(path.join(root,rel)))if(/\.(css|js|png)$/.test(name)&&!['Ajax.js','Database.js','script.js'].includes(name)){
   if(name.endsWith('.js')){
    let js=fs.readFileSync(path.join(root,rel,name),'utf8').replace(/\.php\b/g,'.html').replace(/[\t ]+$/gm,'');
+   if(rel==='admin'&&['users.js','patients.js','doctors.js','dashboard.js'].includes(name))js=js.replaceAll('want to delete','want to deactivate').replaceAll('Delete user ','Deactivate user ').replaceAll('deleted successfully','deactivated successfully').replaceAll('This action cannot be undone.','The account will be disabled; its visit and payment history will be preserved.');
+   if(rel==='admin'&&name==='appointments.js')js=js.replaceAll('want to delete the appointment','want to cancel the appointment').replaceAll('This action cannot be undone.','The appointment will remain in the visit history.');
+   if(rel==='admin'&&name==='billing.js')js=js.replace('${description}', '${window.CarePlusViewPHP.escape(description)}');
+   if(rel==='admin'&&name==='activity.js')js=js.replace(/function highlightSearchTerms\(\) \{[\s\S]*?\r?\n\}/,fs.readFileSync(path.join(out,'original-design/activity-highlight.js'),'utf8'));
+   if(rel==='admin'&&name==='reports.js')js=js.replace(/function setDateRange\(range\) \{[\s\S]*?\r?\n\}/,fs.readFileSync(path.join(out,'original-design/report-date-range.js'),'utf8'));
+   if(rel==='patient'&&name==='notification.js')js=js.replace(/const response = await fetch\(window.location.href\);[\s\S]*?const newCount = doc.querySelectorAll\('.notification-card'\).length;/,"const {count:newCount,error}=await window.CarePlusOriginalData.client.from('notifications').select('notification_id',{count:'exact',head:true});\n            if(error)throw error;\n            const currentCount=window.CarePlusOriginalData.tables.notifications.length;");
+   // All photo values are resolved Storage URLs; never prepend filesystem paths.
+   js=js.replace(/\.\.\/\$\{((?:patient|doc|prescription)\.(?:profile_picture|doctor_profile_picture))\}/g,'${window.CarePlusViewPHP.photoUrl($1)}');
+   js=js.replace(/prescription\.profile_picture\.startsWith\('\.\.\/'\)\s*\? prescription\.profile_picture\s*: '\.\.\/' \+ prescription\.profile_picture/g,'window.CarePlusViewPHP.photoUrl(prescription.profile_picture)');
+   js=js.replace("'../' + (doctor.profile_image || doctor.profile_picture)","window.CarePlusViewPHP.photoUrl(doctor.profile_image || doctor.profile_picture)").replace("'../' + patient.profile_image","window.CarePlusViewPHP.photoUrl(patient.profile_image)");
+   if(rel==='doctor'&&name==='prescriptions.js')js=js.replace('${med.quantity_prescribed || 1}',"${med.quantity_prescribed ?? '-'}").replace('${prescription.patient_age} years',"${prescription.patient_age === null || prescription.patient_age === undefined || prescription.patient_age === '' ? 'Age not provided' : prescription.patient_age + ' years'}");
+   if(rel==='doctor'&&name==='prescriptions.js')js=js.replace("submitData.append('patient_id', patientId);","submitData.append('patient_id', patientId);\n        submitData.append('appointment_id', formData.get('appointment_id') || '');");
    if(rel==='patient'&&name==='appointment.js')js=js.replace(/\$\{rx\.(medication_name|dosage|frequency|duration|quantity_prescribed)(?: \|\| '-')?\}/g,(_,field)=>'${window.CarePlusViewPHP.escape(rx.'+field+" || '-')}");
    if(rel==='patient'&&name==='prescription.js')js=js.replace('src="../${prescription.doctor_profile_picture}"','src="${prescription.doctor_profile_picture}"').replace('${prescription.doctor_phone}','${prescription.doctor_phone || \'Not provided\'}');
    if(rel==='patient'&&name==='symptomChecker.js'){
@@ -132,6 +159,10 @@ for(const item of files){
     js=js.replace("// Show detected scopes count","if (data.urgency === 'unassessed') { urgencyText = 'Not assessed'; urgencyMessage = 'No matching rule was found. A healthcare professional should assess these symptoms.'; }\n    // Show detected scopes count");
     js=js.replaceAll('Database Analysis Results','Rule-based Screening Results').replaceAll('Database Analysis','Rule-based Screening').replaceAll('View Full Analysis','View Details').replace('Analysis completed successfully!','Screening saved. This is a prototype rule-based result.').replace("showAlert('Unable to connect to the server. Please check console for details.', 'error');","showAlert(error.message || 'Unable to save symptoms. Please try again.', 'error');");
    }
+   // Clinical text, names and medication fields must remain text in legacy dialogs.
+   if(!(rel==='admin'&&name==='activity.js'))js=js.replace(/\$\{((?:prescription|record|med|patient|doctor)\.(?:patient_name|doctor_name|first_name|last_name|diagnosis|notes|symptoms|prescription|lab_results|patient_gender|phone|email|medication_name|name|dosage|frequency|duration|instructions|verification_code))(\s*\|\|\s*'[^']*')?\}/g,(_,value,fallback)=>'${window.CarePlusViewPHP.escape('+value+(fallback||'')+')}');
+   if(rel==='doctor'&&name==='medicalRecords.js')js=js.replace("return text.replace(/\\n/g, '<br>');","return window.CarePlusViewPHP.escape(text).replace(/\\n/g, '<br>');");
+   if(rel==='patient'&&name==='prescription.js')js=js.replace("prescription.notes.replace(/\\n/g, '<br>')","window.CarePlusViewPHP.escape(prescription.notes).replace(/\\n/g, '<br>')");
    fs.writeFileSync(path.join(out,rel,name),js.trimEnd()+'\n');
   }
   else if(name.endsWith('.css'))fs.writeFileSync(path.join(out,rel,name),fs.readFileSync(path.join(root,rel,name),'utf8').replace(/[\t ]+$/gm,''));

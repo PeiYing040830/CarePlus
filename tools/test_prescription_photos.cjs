@@ -1,0 +1,24 @@
+﻿const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM,VirtualConsole}=require('../../.careplus-test-tools/node_modules/jsdom');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8'),tick=()=>new Promise(r=>setTimeout(r,0));
+(async()=>{
+ const dom=new JSDOM('',{url:'http://127.0.0.1:8080/patient/prescription.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:new VirtualConsole()}),w=dom.window;await tick();
+ for(const f of ['php-view-runtime','context','views','photos'])w.eval(read('original-design/'+f+'.js'));
+ let photos=[{doctor_id:1,profile_picture:'test/first.png'}];
+ const signed=p=>'https://images.example.test/'+p+'?token=test';
+ const state={page:'patient/prescription.html',directory:[{doctor_id:1,name:'Test Doctor'},{doctor_id:2,name:'No Photo'}],tables:{doctors:[{doctor_id:1,profile_picture:'stale/old.png'}],prescriptions:[{prescription_id:1,doctor_id:1,patient_id:1,medications_json:[]},{prescription_id:2,doctor_id:2,patient_id:1,medications_json:[]}]},profile:{role:'patient'},user:{},client:{rpc:async()=>({data:photos}),storage:{from:()=>({createSignedUrl:async p=>({data:{signedUrl:signed(p)}})})}}};
+ w.CarePlusOriginalData=state;
+ await w.CarePlusDoctorPhotos(state.client,state.directory,state.tables);
+ const html=w.CarePlusOriginalViews[state.page](w.CarePlusOriginalContext(state,state.page),w.CarePlusViewPHP);
+ w.document.body.innerHTML=html;
+ const card=w.document.querySelector('[data-prescription-id="1"] .doctor-avatar');
+ assert.equal(card.querySelector('img').getAttribute('src'),signed('test/first.png'),'Card uses direct signed URL');
+ w.eval(read('original-design/prescription-photos.js'));w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+ const first=card.querySelector('img');
+ photos=[{doctor_id:1,profile_picture:'test/new.png'}];w.dispatchEvent(new w.Event('focus'));await tick();await tick();
+ assert.equal(card.querySelector('img').src,signed('test/new.png'),'Returning to page refreshes the current doctor photo');
+ first.dispatchEvent(new w.Event('error'));assert.equal(card.querySelector('img').src,signed('test/new.png'),'Old detached image errors cannot erase the new photo');
+ assert.equal(w.document.querySelector('[data-prescription-id="2"] .doctor-avatar img'),null);
+ photos=[];w.dispatchEvent(new w.Event('focus'));await tick();await tick();assert.equal(card.querySelector('img'),null,'Removed doctor photo clears stale images');
+ dom.window.close();console.log('Passed: prescription card photo, stale source replacement, page-focus synchronization, no-photo fallback and delayed-image race.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

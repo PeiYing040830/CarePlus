@@ -375,6 +375,7 @@
         submitData.append('action', isEditMode ? 'update_prescription' : 'create_prescription');
         if (isEditMode) submitData.append('prescription_id', prescriptionId);
         submitData.append('patient_id', patientId);
+        submitData.append('appointment_id', formData.get('appointment_id') || '');
         submitData.append('diagnosis', formData.get('diagnosis'));
         submitData.append('notes', formData.get('notes') || '');
         submitData.append('medications', JSON.stringify(medications));
@@ -488,13 +489,11 @@
         let avatarContent;
 
         if (prescription.profile_picture && prescription.profile_picture.trim() !== '') {
-            const imgPath = prescription.profile_picture.startsWith('../')
-                ? prescription.profile_picture
-                : '../' + prescription.profile_picture;
+            const imgPath = window.CarePlusViewPHP.photoUrl(prescription.profile_picture);
 
             // Helper for fallback to initials if image fails to load
             const initials = getInitials(prescription.patient_name);
-            avatarContent = `<img src="${imgPath}" alt="${prescription.patient_name}" onerror="this.parentNode.innerHTML='${initials}'">`;
+            avatarContent = `<img src="${imgPath}" alt="${window.CarePlusViewPHP.escape(prescription.patient_name)}" onerror="this.parentNode.innerHTML='${initials}'">`;
         } else {
             avatarContent = getInitials(prescription.patient_name);
         }
@@ -508,8 +507,8 @@
                     ${avatarContent}
                 </div>
                 <div class="modal-patient-info">
-                    <h2>${prescription.patient_name}</h2>
-                    <p>${prescription.patient_age} years • ${prescription.patient_gender}</p>
+                    <h2>${window.CarePlusViewPHP.escape(prescription.patient_name)}</h2>
+                    <p>${prescription.patient_age === null || prescription.patient_age === undefined || prescription.patient_age === '' ? 'Age not provided' : prescription.patient_age + ' years'} • ${window.CarePlusViewPHP.escape(prescription.patient_gender)}</p>
                 </div>
                 <div class="modal-status ${statusClass}">
                     ${prescription.status}
@@ -525,7 +524,7 @@
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">VERIFICATION CODE</span>
-                        <span class="meta-value verification-code">${prescription.verification_code}</span>
+                        <span class="meta-value verification-code">${window.CarePlusViewPHP.escape(prescription.verification_code)}</span>
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">DATE PRESCRIBED</span>
@@ -542,7 +541,7 @@
             <div class="form-section">
                 <h3>🩺 Diagnosis</h3>
                 <p style="margin-top:0.5rem; font-weight:600; color:#2d3748; background:#F7FAFC; padding:15px; border-radius:12px; border:1px solid #EDF2F7;">
-                    ${prescription.diagnosis}
+                    ${window.CarePlusViewPHP.escape(prescription.diagnosis)}
                 </p>
             </div>` : ''}
 
@@ -563,12 +562,12 @@
                         <tbody>
                             ${prescription.medications.map(med => `
                                 <tr>
-                                    <td style="font-weight:700; color:#2d3748;">${med.medication_name}</td>
-                                    <td>${med.dosage}</td>
-                                    <td>${med.frequency}</td>
-                                    <td>${med.duration}</td>
-                                    <td>${med.quantity_prescribed || 1}</td>
-                                    <td>${med.instructions || '-'}</td>
+                                    <td style="font-weight:700; color:#2d3748;">${window.CarePlusViewPHP.escape(med.medication_name)}</td>
+                                    <td>${window.CarePlusViewPHP.escape(med.dosage)}</td>
+                                    <td>${window.CarePlusViewPHP.escape(med.frequency)}</td>
+                                    <td>${window.CarePlusViewPHP.escape(med.duration)}</td>
+                                    <td>${med.quantity_prescribed ?? '-'}</td>
+                                    <td>${window.CarePlusViewPHP.escape(med.instructions || '-')}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -579,7 +578,7 @@
             ${prescription.notes ? `
             <div class="form-section">
                 <h3>📝 Notes</h3>
-                <p style="margin-top:0.5rem; color:#2d3748; background:#F7FAFC; padding:15px; border-radius:12px; border:1px solid #EDF2F7; white-space: pre-wrap; text-align: left;">${prescription.notes}</p>
+                <p style="margin-top:0.5rem; color:#2d3748; background:#F7FAFC; padding:15px; border-radius:12px; border:1px solid #EDF2F7; white-space: pre-wrap; text-align: left;">${window.CarePlusViewPHP.escape(prescription.notes)}</p>
             </div>` : ''}
         `;
 

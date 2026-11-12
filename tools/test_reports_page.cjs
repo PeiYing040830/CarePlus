@@ -1,0 +1,24 @@
+﻿const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM,requestInterceptor,VirtualConsole}=require('../../.careplus-test-tools/node_modules/jsdom');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const appointments=[['2026-03-15','completed',1,1],['2026-03-15','confirmed',2,1],['2026-03-16','cancelled',1,2],['2026-03-16','pending',1,2],['2026-04-01','completed',1,2]].map(([appointment_date,status,patient_id,doctor_id],i)=>({appointment_id:i+1,appointment_date,status,patient_id,doctor_id}));
+const tables={admins:[{user_id:1,first_name:'Test',last_name:'Admin'}],doctors:[{doctor_id:1,user_id:2,first_name:'Alpha',last_name:'Doctor',specialization:'Synthetic'},{doctor_id:2,user_id:3,first_name:'Beta',last_name:'Doctor',specialization:'Synthetic'}],patients:[{patient_id:1},{patient_id:2}],appointments};
+const client={auth:{getSession:async()=>({data:{session:{user:{id:'admin-uuid'}}}}),getUser:async()=>({data:{user:{id:'admin-uuid'}}})},from:name=>({select:()=>({eq:()=>({single:async()=>({data:{role:'admin',legacy_user_id:1,display_name:'Test Admin'}})}),limit:async()=>({data:structuredClone(tables[name]||[])})})}),rpc:async name=>({data:name==='careplus_role'?'admin':[]})};
+const resources={interceptors:[requestInterceptor(request=>{const u=new URL(request.url);return new Response(u.origin==='http://127.0.0.1:8080'?fs.readFileSync(path.join(root,u.pathname)):'',{headers:{'content-type':u.pathname.endsWith('.css')?'text/css':'application/javascript'}});})]};
+(async()=>{
+ const charts=[],errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>{if(e.type!=='not-implemented')errors.push(e.message);});
+ const dom=new JSDOM(read('admin/reports.html'),{url:'http://127.0.0.1:8080/admin/reports.html?date_from=2026-03-16&date_to=2026-03-15&report_type=doctors',runScripts:'dangerously',resources,virtualConsole:vc,beforeParse(w){w.Date.now=()=>Date.parse('2026-11-13T04:00:00Z');w.supabase={createClient:()=>client};w.Response=Response;w.fetch=async()=>new Response('{}');w.Chart=class{constructor(ctx,config){charts.push({id:ctx.canvas.id,config});}destroy(){}update(){}};w.HTMLCanvasElement.prototype.getContext=function(){return {canvas:this};};}}),w=dom.window;
+ for(let i=0;i<100&&charts.length<2;i++)await new Promise(r=>setTimeout(r,10));
+ assert.equal(charts.length,2,'Both real chart initializers must execute');
+ assert.equal(w.document.querySelector('[name=date_from]').value,'2026-03-15');assert.equal(w.document.querySelector('[name=date_to]').value,'2026-03-16');assert.equal(w.document.querySelector('[name=report_type]').value,'doctors');
+ const summary=w.extractStatistics();assert.equal(summary['Total Appointments'],'4');assert.equal(summary['Active Patients'],'2');assert.equal(summary['Completion Rate'],'25%');
+ const trend=charts.find(c=>c.id==='trendChart').config.data;assert.deepEqual(Array.from(trend.labels),['2026-03-15','2026-03-16']);assert.deepEqual(Array.from(trend.datasets[0].data),[1,0]);
+ const status=charts.find(c=>c.id==='statusChart').config.data;assert.equal(status.datasets[0].data.reduce((a,b)=>a+b,0),4);
+ const doctors=w.extractDoctorsData();assert.equal(doctors.length,2);assert.equal(doctors[0].appointments,'2');assert.equal(doctors[0].performance,'100%');
+ const form=w.document.getElementById('reportFilterForm');form.addEventListener('submit',e=>e.preventDefault());
+ w.setDateRange('month');assert.equal(form.elements.date_from.value,'2026-11-01');assert.equal(form.elements.date_to.value,'2026-11-13');
+ w.setDateRange('week');assert.equal(form.elements.date_from.value,'2026-11-09');w.setDateRange('year');assert.equal(form.elements.date_from.value,'2026-01-01');
+ w.history.replaceState({},'','/admin/reports.html');let c=w.CarePlusOriginalContext(w.CarePlusOriginalData,'admin/reports.html');assert.equal(c.statistics.total_appointments,5);assert.equal(c.dateFrom,'2026-03-15');
+ w.history.replaceState({},'','?date_from=2026-12-01&date_to=2026-12-31');c=w.CarePlusOriginalContext(w.CarePlusOriginalData,'admin/reports.html');assert.equal(c.statistics.total_appointments,0);assert.equal(c.statuses.length,0);assert.equal(c.trendData.length,0);assert(w.CarePlusOriginalViews['admin/reports.html'](c,w.CarePlusViewPHP).includes('No appointments were found'));
+ assert.deepEqual(errors,[]);dom.window.close();console.log('Passed: full Reports bootstrap, date-filtered statistics, both charts, top doctors, export data, reversed/default/empty ranges and calendar shortcuts.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

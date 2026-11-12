@@ -292,7 +292,7 @@ function addBillItem(description = '', price = '') {
     const row = document.createElement('tr');
     row.innerHTML = `
         <td style="padding: 5px;">
-            <input type="text" name="items[${index}][description]" value="${description}" placeholder="Item name..." class="item-desc" required style="width: 100%; padding: 0.875rem 1rem; border-radius: 12px; border: 2px solid #e0e0e0; background: #fafafa; transition: all 0.3s ease; font-family: inherit;">
+            <input type="text" name="items[${index}][description]" value="${window.CarePlusViewPHP.escape(description)}" placeholder="Item name..." class="item-desc" required style="width: 100%; padding: 0.875rem 1rem; border-radius: 12px; border: 2px solid #e0e0e0; background: #fafafa; transition: all 0.3s ease; font-family: inherit;">
         </td>
         <td style="padding: 5px;">
             <input type="number" name="items[${index}][amount]" value="${price}" placeholder="0.00" step="0.01" min="0" class="item-price" required oninput="calculateTotal()" style="width: 100%; padding: 0.875rem 1rem; border-radius: 12px; border: 2px solid #e0e0e0; background: #fafafa; transition: all 0.3s ease; font-family: inherit;">

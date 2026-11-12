@@ -213,7 +213,7 @@ function toggleUserStatus(userId, userType, currentStatus) {
 
 // Delete user
 function deleteUser(userId, userType) {
-    confirmAction(`Are you sure you want to delete this ${userType}? This action cannot be undone.`, () => {
+    confirmAction(`Are you sure you want to deactivate this ${userType}? The account will be disabled; its visit and payment history will be preserved.`, () => {
         showNotification('Processing...', 'info');
 
         fetch('ajax/delete_user.html', {
@@ -229,7 +229,7 @@ function deleteUser(userId, userType) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showNotification(`${userType} deleted successfully!`, 'success');
+                showNotification(`${userType} deactivated successfully!`, 'success');
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 showNotification(data.message || `Failed to delete ${userType}`, 'error');

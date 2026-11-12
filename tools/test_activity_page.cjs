@@ -1,0 +1,24 @@
+﻿const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM,VirtualConsole}=require('../../.careplus-test-tools/node_modules/jsdom');
+const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8'),tick=()=>new Promise(r=>setTimeout(r,0));
+(async()=>{
+ const dom=new JSDOM('',{url:'http://127.0.0.1:8080/admin/activity.html',runScripts:'outside-only',virtualConsole:new VirtualConsole()}),w=dom.window;await tick();
+ for(const f of ['php-view-runtime','context','views'])w.eval(read('original-design/'+f+'.js'));
+ const photo='https://images.example.test/photo.png?token=test';
+ const tables={users:[{user_id:1,email:'patient@example.test',status:'active',created_at:'2026-03-15T23:30:00Z'},{user_id:2,email:'doctor@example.test',status:'active',created_at:'2026-03-14T01:00:00Z'}],patients:[{patient_id:1,user_id:1,first_name:'Synthetic <img src=x>',last_name:'Patient',date_of_birth:'2000-01-01',gender:'female',profile_picture:photo}],doctors:[{doctor_id:2,user_id:2,first_name:'Synthetic',last_name:'Doctor',profile_picture:photo,experience_years:8}],appointments:Array.from({length:25},(_,i)=>({appointment_id:i+1,patient_id:1,doctor_id:2,status:'confirmed',created_at:new Date(Date.UTC(2026,2,16,1,i)).toISOString(),appointment_date:'2026-11-20',appointment_time:'09:00:00',reason:'Synthetic appointment'}))};
+ const state={page:'admin/activity.html',tables,directory:[],profile:{role:'admin'},user:{},client:{}};
+ w.CarePlusOriginalData=state;w.Response=Response;w.fetch=async()=>{throw Error('Unexpected native request');};
+ let c=w.CarePlusOriginalContext(state,state.page);assert.equal(c.totalActivities,27);assert.equal(c.allActivities.length,20);assert.equal(c.totalPages,2);assert.equal(c.stats.appointment_count,25);assert.equal(c.stats.doctor_count,1);assert.equal(c.stats.patient_count,1);
+ w.history.replaceState({},'','?page=2');c=w.CarePlusOriginalContext(state,state.page);assert.equal(c.allActivities.length,7);assert.equal(c.allActivities.at(-1).type,'doctor');
+ w.document.body.innerHTML=w.CarePlusOriginalViews[state.page](c,w.CarePlusViewPHP);assert.equal(w.document.querySelectorAll('.activity-card').length,7);
+ w.eval(read('original-design/bridge.js'));w.eval(read('admin/activity.js'));
+ const result=await(await w.fetch('get_activity_details.html?type=patient&id=1')).json();assert(result.success);assert.equal(result.details.profile_image,photo);
+ w.viewActivityDetails('patient',1);await tick();await tick();assert(w.document.getElementById('modalBody').textContent.includes('Synthetic <img src=x> Patient'));assert.equal(w.document.querySelector('#modalBody img[src=x]'),null);
+ w.history.replaceState({},'','?type=appointment&search=doctor&date_from=2026-03-16&date_to=2026-03-16');c=w.CarePlusOriginalContext(state,state.page);assert.equal(c.totalActivities,25);
+ w.history.replaceState({},'','?type=patient&date_from=2026-03-16&date_to=2026-03-16');c=w.CarePlusOriginalContext(state,state.page);assert.equal(c.totalActivities,1,'Date bounds use Malaysia timezone');
+ w.history.replaceState({},'','?search=%3Cimg');c=w.CarePlusOriginalContext(state,state.page);w.document.body.innerHTML=w.CarePlusOriginalViews[state.page](c,w.CarePlusViewPHP);w.highlightSearchTerms();assert.equal(w.document.querySelector('img[src=x]'),null);assert(w.document.querySelector('mark'));
+ w.history.replaceState({},'','?search=%5B');w.highlightSearchTerms();
+ state.profile.role='patient';const denied=await(await w.fetch('get_activity_details.html?type=patient&id=1')).json();assert.equal(denied.success,false);
+ state.profile.role='admin';w.history.replaceState({},'','/admin/dashboard.html');assert.equal(w.CarePlusOriginalContext(state,'admin/dashboard.html').recentActivity.length,27);
+ dom.window.close();console.log('Passed: activity aggregation, newest-first pagination, type/name/date filters, Malaysia date boundaries, detail modal/images, admin restriction and safe search highlighting.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

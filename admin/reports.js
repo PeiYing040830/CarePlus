@@ -82,37 +82,18 @@ function initCharts() {
 }
 
 // ✅ Single setDateRange function (uses serverDate + submits reportFilterForm)
+/* Compiled into reports.js; Malaysia's supplied calendar date avoids UTC shifts. */
 function setDateRange(range) {
-    const serverDate = document.body?.dataset?.serverDate;
-    const baseDate = serverDate ? new Date(`${serverDate}T00:00:00`) : new Date();
-    const today = baseDate.toISOString().split('T')[0];
-    const dateFromInput = document.querySelector('input[name="date_from"]');
-    const dateToInput = document.querySelector('input[name="date_to"]');
-
-    dateToInput.value = today;
-
-    switch(range) {
-        case 'today':
-            dateFromInput.value = today;
-            break;
-        case 'week':
-            const weekAgo = new Date(baseDate);
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            dateFromInput.value = weekAgo.toISOString().split('T')[0];
-            break;
-        case 'month':
-            const monthAgo = new Date(baseDate);
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            dateFromInput.value = monthAgo.toISOString().split('T')[0];
-            break;
-        case 'year':
-            const currentYear = baseDate.getFullYear();
-            dateFromInput.value = `${currentYear}-01-01`;
-            break;
-    }
-
-    document.getElementById('reportFilterForm').submit();
+ const today=document.body.dataset.serverDate||window.CarePlusViewPHP.date('Y-m-d');
+ const start=new Date(today+'T00:00:00Z');
+ if(range==='week')start.setUTCDate(start.getUTCDate()-((start.getUTCDay()+6)%7));
+ else if(range==='month')start.setUTCDate(1);
+ else if(range==='year'){start.setUTCMonth(0,1);}
+ document.querySelector('input[name="date_from"]').value=start.toISOString().slice(0,10);
+ document.querySelector('input[name="date_to"]').value=today;
+ document.getElementById('reportFilterForm').requestSubmit();
 }
+
 
 // Notification System
 function injectToastStyles() {

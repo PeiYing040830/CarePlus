@@ -13,6 +13,9 @@ window.CarePlusProfilePhotos=async(client,tables)=>{
 window.CarePlusDoctorPhotos=async(client,directory,tables)=>{
  const result=await client.rpc('careplus_doctor_photos');
  if(result.error){console.error('Doctor photographs unavailable:',result.error.message);return;}
+ for(const doctor of directory)doctor.profile_picture=null;
+ const activeIds=new Set(directory.map(d=>String(d.doctor_id)));
+ for(const doctor of tables.doctors||[])if(activeIds.has(String(doctor.doctor_id)))doctor.profile_picture=null;
  await Promise.all((result.data||[]).map(async photo=>{
   const signed=await client.storage.from('careplus-uploads').createSignedUrl(photo.profile_picture,3600);
   if(signed.error){console.error('Doctor photograph unavailable:',photo.doctor_id);return;}

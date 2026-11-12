@@ -360,15 +360,9 @@ let autoRefreshInterval;
 function startAutoRefresh() {
     autoRefreshInterval = setInterval(async () => {
         try {
-            const response = await fetch(window.location.href);
-            const html = await response.text();
-
-            // Parse the response to check for new notifications
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-
-            const currentCount = document.querySelectorAll('.notification-card').length;
-            const newCount = doc.querySelectorAll('.notification-card').length;
+            const {count:newCount,error}=await window.CarePlusOriginalData.client.from('notifications').select('notification_id',{count:'exact',head:true});
+            if(error)throw error;
+            const currentCount=window.CarePlusOriginalData.tables.notifications.length;
 
             // If there are new notifications, show a subtle indicator
             if (newCount > currentCount) {

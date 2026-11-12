@@ -10,6 +10,7 @@ window.CarePlusViewPHP=(()=>{
   if(value==null||value==='')return base;
   if(typeof value==='number')return value;
   const s=str(value).trim();
+  if(['today','tomorrow','yesterday'].includes(s))return timestamp(date('Y-m-d',base)+'T00:00:00+08:00')+({today:0,tomorrow:86400,yesterday:-86400})[s];
   const rel=s.match(/^([+-]?\d+)\s*(seconds?|minutes?|hours?|days?|weeks?|months?|years?)$/i);
   if(rel)return base+Number(rel[1])*({second:1,minute:60,hour:3600,day:86400,week:604800,month:2629800,year:31557600})[rel[2].toLowerCase().replace(/s$/,'')];
   if(s==='now')return Date.now()/1000;
@@ -40,6 +41,12 @@ window.CarePlusViewPHP=(()=>{
   if(months<0){years+=Math.floor(months/12);months=((months%12)+12)%12;}
   return {years,months,days,total_days:Math.floor((end.stamp-start.stamp)/86400000)};
  }
+ function photoUrl(value){
+  const raw=str(value).trim();
+  if(/^data:image\/(?:svg\+xml|png|jpeg|webp|gif)[;,]/i.test(raw)||/^blob:/i.test(raw))return raw;
+  const match=raw.match(/https?:\/\/.+$/i);if(!match)return '';
+  try{const url=new URL(match[0]);return ['https:','http:'].includes(url.protocol)?url.href:'';}catch{return '';}
+ }
  const functions={
   htmlspecialchars:escape,html_entity_decode:v=>{const t=document.createElement('textarea');t.innerHTML=str(v);return t.value;},
   date,strtotime:timestamp,time:()=>Date.now()/1000,session_id:()=>window.CarePlusOriginalData?.user?.id||'guest',
@@ -47,18 +54,18 @@ window.CarePlusViewPHP=(()=>{
   explode:(sep,v)=>str(v).split(sep),strtolower:v=>str(v).toLowerCase(),strtoupper:v=>str(v).toUpperCase(),ucfirst:v=>str(v).charAt(0).toUpperCase()+str(v).slice(1),
   intval:v=>parseInt(v,10)||0,floor:Math.floor,round:(v,d=0)=>Math.round(Number(v)*10**d)/10**d,abs:Math.abs,max:(...v)=>Math.max(...(v.length===1&&Array.isArray(v[0])?v[0]:v)),min:(...v)=>Math.min(...v),
   number_format:(v,d=0)=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:Number(d),maximumFractionDigits:Number(d)}),
-  json_encode:v=>JSON.stringify(v??null).replaceAll('<','\\u003c'),
+  json_encode:v=>JSON.stringify(v??null).replaceAll('<','\\u003c').replaceAll('>','\\u003e').replaceAll("'",'\\u0027').replaceAll('&','\\u0026'),
   in_array:(v,a)=>vals(a).some(x=>String(x)===String(v)),array_slice:(a,start,len)=>vals(a).slice(start,len==null?undefined:Number(start)+Number(len)),
   array_map:(fn,a)=>vals(a).map(v=>(functions[fn]||str)(v)),
   str_replace:(search,repl,value)=>{for(const [i,s] of (Array.isArray(search)?search:[search]).entries())value=str(value).split(str(s)).join(str(Array.isArray(repl)?repl[i]:repl));return value;},
   ltrim:(v,chars)=>chars?str(v).replace(new RegExp('^['+str(chars).replace(/[\]\\^-]/g,'\\$&')+']+'),''):str(v).trimStart(),
-  basename:v=>str(v).split('/').pop(),file_exists:v=>/^https?:|^blob:/.test(str(v)),
+  basename:v=>str(v).split('/').pop(),file_exists:v=>Boolean(photoUrl(v)),
   addslashes:v=>str(v).replace(/['"\\]/g,'\\$&'),nl2br:v=>str(v).replace(/\n/g,'<br>'),str_pad:(v,len,pad=' ',type)=>type===0?str(v).padStart(Number(len),pad):str(v).padEnd(Number(len),pad),
   urlencode:v=>encodeURIComponent(str(v)),isLoggedIn:()=>Boolean(window.CarePlusOriginalData?.user),
-  date_create:v=>timestamp(v),date_diff:(a,b)=>({y:Math.floor(Math.abs(b-a)/31557600),days:Math.floor(Math.abs(b-a)/86400)}),
+  date_create:v=>timestamp(v),date_diff:(a,b)=>{const interval=ageParts(date('Y-m-d',Math.min(a,b)),date('Y-m-d',Math.max(a,b)));return {y:interval.years,m:interval.months,d:interval.days,days:interval.total_days,invert:a>b?1:0};},
   getStarDisplay:v=>'★'.repeat(Math.round(Number(v)||0))+'☆'.repeat(5-Math.round(Number(v)||0))
  };
- return {str,truth,entries,escape,date,timestamp,ageParts,
+ return {str,truth,entries,escape,date,timestamp,ageParts,photoUrl,
   get:(v,key)=>key==='num_rows'&&Array.isArray(v)?v.length:v?.[key]??null,
   constant:(name,c)=>({SITE_NAME:'CarePlus - Smart Clinic Management Portal',SITE_URL:window.CarePlusOriginalBase?.replace(/\/$/,''),STR_PAD_LEFT:0,ENT_QUOTES:3,JSON_HEX_TAG:1,JSON_HEX_APOS:4,JSON_HEX_QUOT:8,JSON_HEX_AMP:2}[name]??c[name]??null),
   array:pairs=>{if(pairs.every(([key])=>key===null))return pairs.map(x=>x[1]);const result={};let index=0;for(const [key,value]of pairs)result[key??index++]=value;return result;},

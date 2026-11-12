@@ -3,10 +3,11 @@ const {JSDOM,requestInterceptor,VirtualConsole}=require('../../.careplus-test-to
 const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const resources={interceptors:[requestInterceptor(request=>{const u=new URL(request.url);const type=u.pathname.endsWith('.css')?'text/css':'application/javascript';if(u.origin!=='http://127.0.0.1:8080')return new Response('',{headers:{'content-type':type}});const file=path.join(root,decodeURIComponent(u.pathname));return new Response(fs.readFileSync(file),{headers:{'content-type':type}});})]};
 (async()=>{
- for(const role of ['patient','doctor','admin'])for(const page of ['dashboard','profile']){
+ for(const role of ['patient','doctor','admin'])for(const page of (role==='admin'?['dashboard','profile','patients']:['dashboard','profile'])){
  const signed='https://images.example.test/storage/v1/object/sign/careplus-uploads/test/'+role+'.png?token=test';
  const row={user_id:1,patient_id:1,doctor_id:1,admin_id:1,first_name:'Test',last_name:role,date_of_birth:'2000-08-30',profile_picture:'test-uuid/'+role+'.png'};
  const fixtures={users:[{user_id:1,email:'test@example.test',status:'active'}],[role==='patient'?'patients':role==='doctor'?'doctors':'admins']:[row]};
+ if(role==='admin'&&page==='patients')fixtures.patients=[{...row,patient_id:2,user_id:2,first_name:'Synthetic',last_name:'Patient',gender:'female',date_of_birth:'2000-08-30'}];
  const client={auth:{getSession:async()=>({data:{session:{user:{id:'test-uuid'}}}}),getUser:async()=>({data:{user:{id:'test-uuid',email:'test@example.test'}}})},from:name=>({select:()=>({eq:()=>({single:async()=>({data:{role,legacy_user_id:1,display_name:'Test '+role}})}),limit:async()=>({data:structuredClone(fixtures[name]||[])})})}),rpc:async(name)=>({data:name==='careplus_role'?role:[]}),storage:{from:()=>({createSignedUrl:async()=>({data:{signedUrl:signed}})})}};
  const shell=read(role+'/'+page+'.html');assert.equal((shell.match(/original-design\/app-core\.js\?v=/g)||[]).length,1);assert(!shell.includes('src="../original-design/context.js"'));
  const console=new VirtualConsole(),errors=[];console.on('jsdomError',e=>{if(e.type!=='not-implemented')errors.push(e.message);});
@@ -27,6 +28,7 @@ const resources={interceptors:[requestInterceptor(request=>{const u=new URL(requ
  assert.equal(dom.window.getComputedStyle(nav.querySelector(':scope > .mobile-menu-toggle')).gridColumn,'2');
  const avatar=dom.window.document.querySelector('.user-badge img');assert(avatar,role+' sidebar avatar must exist');assert.equal(avatar.src,signed);
  if(page==='profile'){const image=dom.window.document.querySelector('img#profilePreview');assert(image,role+' profile photograph must exist');assert.equal(image.src,signed);}
+ if(role==='admin'&&page==='patients'){const cells=dom.window.document.querySelectorAll('tbody tr:first-child td');const expectedAge=dom.window.CarePlusViewPHP.ageParts('2000-08-30').years;assert(cells[3].textContent.includes(expectedAge+' years'));assert.equal(dom.window.getComputedStyle(dom.window.document.querySelector('td.actions')).display,'table-cell');assert.equal(dom.window.getComputedStyle(dom.window.document.querySelector('.table-container')).overflowX,'scroll');}
  assert.deepEqual(errors,[],role+'/'+page);
  dom.window.close();
  }

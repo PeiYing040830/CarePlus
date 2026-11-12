@@ -219,7 +219,7 @@ function displayMedicalRecord(data) {
         html += `
             <div class="record-section">
                 <h3><i class="fas fa-notes-medical"></i> Diagnosis</h3>
-                <p>${record.diagnosis || 'No diagnosis recorded'}</p>
+                <p>${window.CarePlusViewPHP.escape(record.diagnosis || 'No diagnosis recorded')}</p>
             </div>
 
             <div class="record-section">
@@ -242,7 +242,7 @@ function displayMedicalRecord(data) {
             ${record.lab_results ? `
                 <div class="record-section">
                     <h3><i class="fas fa-flask"></i> Lab Results</h3>
-                    <p>${record.lab_results}</p>
+                    <p>${window.CarePlusViewPHP.escape(record.lab_results)}</p>
                 </div>
             ` : ''}
         `;

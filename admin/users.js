@@ -25,7 +25,7 @@ function closeEditModal() {
 }
 
 function deleteUser(userId, email) {
-    if (confirm(`Delete user ${email}?`)) {
+    if (confirm(`Deactivate user ${email}?`)) {
         document.getElementById('delete_user_id').value = userId;
         document.getElementById('deleteForm').submit();
     }
@@ -328,7 +328,7 @@ function editUser(user) {
 }
 
 function deleteUser(userId, email) {
-    if (confirm(`Are you sure you want to delete user "${email}"? This action cannot be undone.`)) {
+    if (confirm(`Are you sure you want to deactivate user "${email}"? The account will be disabled; its visit and payment history will be preserved.`)) {
         document.getElementById('delete_user_id').value = userId;
         document.getElementById('deleteForm').submit();
     }

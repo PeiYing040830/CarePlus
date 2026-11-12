@@ -217,7 +217,7 @@ function viewRecord(recordId) {
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Phone</span>
-                                    <span class="detail-value">${record.phone || 'N/A'}</span>
+                                    <span class="detail-value">${window.CarePlusViewPHP.escape(record.phone || 'N/A')}</span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Blood Type</span>
@@ -474,7 +474,7 @@ function ucFirst(string) {
 }
 
 function nl2br(text) {
-    return text.replace(/\n/g, '<br>');
+    return window.CarePlusViewPHP.escape(text).replace(/\n/g, '<br>');
 }
 
 // Add CSS for animations and details view
