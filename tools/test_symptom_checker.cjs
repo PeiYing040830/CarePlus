@@ -21,12 +21,6 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  assert(w.document.getElementById('historyList').textContent.includes('URGENT'));
  await w.viewCheck(42);assert(w.document.getElementById('modalBody').textContent.includes('Urgent'));
  assert.equal(w.document.getElementById('submitBtn').disabled,false);
- state.client.rpc=async(name,args)=>({data:name==='careplus_search_conditions'?[{code:'TEST',description:'<img src=x onerror=alert(1)> Synthetic reference'}]:[]});
- w.eval(read('original-design/condition-catalog.js'));
- w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
- const search=w.document.getElementById('condition-search');search.value='synthetic';
- search.form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await tick();
- assert(search.closest('section').textContent.includes('<img src=x onerror=alert(1)>'));
- assert.equal(search.closest('section').querySelector('img'),null,'Reference descriptions must render as text');
+ assert.equal(w.document.getElementById('condition-search'),null,'The removed reference search must not appear');
  dom.window.close();console.log('Passed: original symptom form submission, Supabase screening adapter, urgent result/history, immediate saved-record details. No real medical data written.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

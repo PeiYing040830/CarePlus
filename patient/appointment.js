@@ -269,11 +269,11 @@ function displayMedicalRecord(data) {
             if (rx.medication_name) {
                 html += `
                     <tr>
-                        <td>${rx.medication_name}</td>
-                        <td>${rx.dosage || '-'}</td>
-                        <td>${rx.frequency || '-'}</td>
-                        <td>${rx.duration || '-'}</td>
-                        <td>${rx.quantity_prescribed || '-'}</td>
+                        <td>${window.CarePlusViewPHP.escape(rx.medication_name || '-')}</td>
+                        <td>${window.CarePlusViewPHP.escape(rx.dosage || '-')}</td>
+                        <td>${window.CarePlusViewPHP.escape(rx.frequency || '-')}</td>
+                        <td>${window.CarePlusViewPHP.escape(rx.duration || '-')}</td>
+                        <td>${window.CarePlusViewPHP.escape(rx.quantity_prescribed || '-')}</td>
                     </tr>
                 `;
             }

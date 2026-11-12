@@ -84,7 +84,7 @@ function source(file){
  if(path.basename(file)==='dashboard.php'&&path.basename(path.dirname(file))==='patient')markup=markup.replace(/\$cleanImageName = ltrim[\s\S]*?\$hasImage = file_exists\(\$serverPath\);/,"$imagePath = $doctor['profile_picture']; $hasImage = file_exists($imagePath);");
  if(path.basename(file)==='appointment.php'&&path.basename(path.dirname(file))==='patient')markup=markup.replace(/\$profilePicturePath = [\s\S]*?(?=\?>)/,"$displayPath = $doctor['profile_picture'] ?? null;\n");
  markup=markup.replace(/\$imagePath = '\.\.\/' \. \$doctor\['profile_picture'\];/g,"$imagePath = $doctor['profile_picture'];").replace("file_exists(__DIR__ . '/' . $imagePath)","file_exists($imagePath)");
- if(path.basename(file)==='symptomChecker.php')markup=markup.replace('else $routineCount++;',"elseif ($check['urgency_level'] === 'routine') $routineCount++;").replaceAll('View Full Analysis','View Details').replace('This is a preliminary assessment tool.','This is a prototype rule-based screening tool; it has not been clinically validated.').replace('</head>','<script src="../original-design/condition-catalog.js" defer></script></head>');
+ if(path.basename(file)==='symptomChecker.php')markup=markup.replace('else $routineCount++;',"elseif ($check['urgency_level'] === 'routine') $routineCount++;").replaceAll('View Full Analysis','View Details').replace('This is a preliminary assessment tool.','This is a prototype rule-based screening tool; it has not been clinically validated.');
  if(path.basename(file)==='payment.php'&&path.basename(path.dirname(file))==='patient'){
   markup=markup.replaceAll('file_exists($physicalPath)','file_exists($dbPath)').replace('<span class="text-muted-small">-</span>','<span class="text-muted-small">Not reviewed</span>').replace('<span class="text-muted-small">-</span>','<span class="text-muted-small">No action required</span>');
   markup=markup.replace(/<td>\s*<\?php if \(\$apt\['payment_status'\] === 'completed'\): \?>[\s\S]*?<\/td>/,'<td><span class="status-badge status-<?php echo htmlspecialchars($apt[\'payment_badge\']); ?>"><?php echo htmlspecialchars($apt[\'payment_label\']); ?></span></td>');
@@ -124,6 +124,7 @@ for(const item of files){
  for(const name of fs.readdirSync(path.join(root,rel)))if(/\.(css|js|png)$/.test(name)&&!['Ajax.js','Database.js','script.js'].includes(name)){
   if(name.endsWith('.js')){
    let js=fs.readFileSync(path.join(root,rel,name),'utf8').replace(/\.php\b/g,'.html').replace(/[\t ]+$/gm,'');
+   if(rel==='patient'&&name==='appointment.js')js=js.replace(/\$\{rx\.(medication_name|dosage|frequency|duration|quantity_prescribed)(?: \|\| '-')?\}/g,(_,field)=>'${window.CarePlusViewPHP.escape(rx.'+field+" || '-')}");
    if(rel==='patient'&&name==='prescription.js')js=js.replace('src="../${prescription.doctor_profile_picture}"','src="${prescription.doctor_profile_picture}"').replace('${prescription.doctor_phone}','${prescription.doctor_phone || \'Not provided\'}');
    if(rel==='patient'&&name==='symptomChecker.js'){
     js=js.replace('You can schedule a regular appointment with your doctor.','Routine rule matched. This does not rule out serious illness.').replace('You should see a doctor within 24-48 hours.','Contact a healthcare professional promptly for assessment.');
