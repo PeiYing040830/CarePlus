@@ -196,6 +196,10 @@ window.CarePlusOriginalContext=(data,page)=>{
   c.eligibleReviews=c.appointments.filter(a=>a.appointment_status==='completed'&&!a.review_id);c.pendingReviewCount=c.eligibleReviews.length;
  }
  if(page==='doctor/patients.html')c.totalVisits=c.patients.reduce((sum,patient)=>sum+patient.total_visits,0);
+ if(page==='patient/medicalRecords.html'&&/^\d+$/.test(params.get('record')||'')){
+  const record=records.find(r=>String(r.record_id)===params.get('record')&&String(r.patient_id)===String(me.patient_id));
+  if(record)c.viewingRecord={...record,appointment_date:record.appointment_date||record.visit_date};
+ }
  if(page==='admin/view_contact.html')c.submissions=c.submissions.map(r=>({...r,id:r.contact_id}));
  if(page==='patient/view_qr.html'){
   const a=c.appointment,visit=P.timestamp((a.appointment_date||'')+' '+(a.appointment_time||''));
