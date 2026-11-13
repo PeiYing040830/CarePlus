@@ -8,6 +8,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  const second={medication_name:'Synthetic medication B <img src=x onerror=alert(1)>',dosage:'Legacy dosage',frequency:'Legacy frequency',duration:'Legacy duration',quantity_prescribed:4};
  const state={page:'patient/appointment.html',profile:{role:'patient'},user:{},directory:[{doctor_id:1,name:'Test Doctor'}],tables:{appointments:[{appointment_id:1,patient_id:1,doctor_id:1,appointment_date:'2026-11-13',appointment_time:'09:00:00',status:'completed'}],medical_records:[{record_id:1,appointment_id:'1',diagnosis:'Synthetic diagnosis'}],prescriptions:[{prescription_id:1,appointment_id:1,patient_id:1,medications_json:[first]},{prescription_id:2,appointment_id:'1',patient_id:1,medications_json:JSON.stringify([second])},{prescription_id:3,appointment_id:2,patient_id:1,medications_json:[{name:'Wrong appointment'}]},{prescription_id:4,appointment_id:1,patient_id:2,medications_json:[{name:'Wrong patient'}]}]},client:{}};
  w.CarePlusOriginalData=state;w.Response=Response;w.fetch=async()=>{throw Error('Unexpected native request');};
+ state.tables.prescriptions.push({prescription_id:5,appointment_id:1,patient_id:1,status:'cancelled',medications_json:[{name:'Cancelled medication must not appear'}]});
  w.eval(read('original-design/bridge.js'));w.eval(read('patient/appointment.js'));
  w.viewMedicalRecord(1);await tick();await tick();
  const rows=w.document.querySelectorAll('.prescription-table tbody tr');assert.equal(rows.length,2,'All matching prescription medications appear');
@@ -16,6 +17,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  assert.equal(w.document.querySelector('.prescription-table img'),null,'Medication values render as text');
  assert(w.document.getElementById('medicalRecordContent').textContent.includes('Synthetic diagnosis'));
  assert(!w.document.getElementById('medicalRecordContent').textContent.includes('Wrong appointment'));
+ assert(!w.document.getElementById('medicalRecordContent').textContent.includes('Cancelled medication must not appear'));
+ assert.equal(state.tables.prescriptions.find(r=>r.prescription_id===5).status,'cancelled','Cancelled history is retained');
  state.tables.prescriptions=[];w.viewMedicalRecord(1);await tick();await tick();assert.equal(w.document.querySelector('.prescription-table'),null,'No empty prescription table when no prescription exists');
  dom.window.close();console.log('Passed: appointment medical-record modal, multiple prescriptions, JSON/array formats, legacy field aliases, quantity, record matching and safe medication text.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

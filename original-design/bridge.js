@@ -92,7 +92,7 @@
   }
   if(name==='view_medical_record'){
    const c=context(),appointment=find('appointments','appointment_id',data.appointment_id);
-   const prescriptions=c.prescriptions.filter(r=>String(r.appointment_id)===String(appointment.appointment_id)&&String(r.patient_id)===String(appointment.patient_id)).flatMap(r=>r.medications.map(m=>({prescription_id:r.prescription_id,medication_name:m.name,dosage:m.dosage??'',frequency:m.frequency??'',duration:m.duration??'',quantity_prescribed:m.quantity??''})));
+   const prescriptions=c.prescriptions.filter(r=>r.status!=='cancelled'&&String(r.appointment_id)===String(appointment.appointment_id)&&String(r.patient_id)===String(appointment.patient_id)).flatMap(r=>r.medications.map(m=>({prescription_id:r.prescription_id,medication_name:m.name,dosage:m.dosage??'',frequency:m.frequency??'',duration:m.duration??'',quantity_prescribed:m.quantity??''})));
    return {success:true,appointment,medical_record:c.medicalRecords.find(r=>String(r.appointment_id)===String(appointment.appointment_id))||null,prescriptions};
   }
   if(name==='mark_all_read'){
