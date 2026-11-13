@@ -86,14 +86,14 @@ async function viewDoctorDetails(doctorId) {
                 ${doctor.bio ? `
                     <div class="section">
                         <h3><span>📝</span> About</h3>
-                        <p class="bio-text">${doctor.bio}</p>
+                        <p class="bio-text">${window.CarePlusViewPHP.escape(doctor.bio)}</p>
                     </div>
                 ` : ''}
 
                 ${doctor.qualifications ? `
                     <div class="section">
                         <h3><span>🎓</span> Qualifications</h3>
-                        <p class="qualifications-text">${doctor.qualifications}</p>
+                        <p class="qualifications-text">${window.CarePlusViewPHP.escape(doctor.qualifications)}</p>
                     </div>
                 ` : ''}
 
