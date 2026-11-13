@@ -43,6 +43,12 @@
     for(const patient of tables.patients||[])patient.email=(contacts.data||[]).find(r=>String(r.patient_id)===String(patient.patient_id))?.email||'';
    }
   }
+  let historicalDoctors=[];
+  if(protectedRole){
+   const history=await client.rpc('careplus_historical_doctors');if(history.error)throw history.error;
+   historicalDoctors=history.data||[];
+   await window.CarePlusProfilePhotos(client,{doctors:historicalDoctors});
+  }
   const directory=await client.rpc('careplus_doctors');if(directory.error&&protectedRole)throw directory.error;
   const contacts=user?await client.rpc('careplus_doctor_contacts'):{data:[]};
   if(contacts.error)console.error('Doctor contact numbers unavailable:',contacts.error.message);
@@ -55,7 +61,7 @@
    for(const doctor of directory.data||[]){const summary=(ratings.data||[]).find(r=>String(r.doctor_id)===String(doctor.doctor_id));if(summary)doctor.rating_summary=summary;}
   }
   await window.CarePlusDoctorPhotos(client,directory.data||[],tables);
-  const data={client,user,profile,tables,directory:directory.data||[],page,base:base.href};
+  const data={client,user,profile,tables,directory:directory.data||[],historicalDoctors,page,base:base.href};
   window.CarePlusOriginalData=data;
   const context=window.CarePlusOriginalContext(data,page);
   const notice=new URLSearchParams(location.search).get('notice');if(notice)context.errors=[notice];

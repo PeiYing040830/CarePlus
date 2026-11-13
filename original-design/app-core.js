@@ -91,7 +91,8 @@ window.CarePlusOriginalContext=(data,page)=>{
   const latestRecord=(t.medical_records||[]).filter(record=>String(record.patient_id)===String(r.patient_id)&&(role!=='doctor'||String(record.doctor_id)===String(activeDoctorId))&&record.visit_date&&record.visit_date<=today).sort((a,b)=>b.visit_date.localeCompare(a.visit_date)||Number(b.record_id)-Number(a.record_id))[0];
   return {...r,email:by(users,'user_id',r.user_id).email||r.email||'',status:by(users,'user_id',r.user_id).status||'active',full_name:name(r),patient_name:name(r),age:r.date_of_birth?P.ageParts(r.date_of_birth,today).years:'',total_visits:visits.length,completed_visits:visits.length,last_visit:lastVisit,medical_conditions:r.allergies||'',last_diagnosis:latestRecord?.diagnosis||'',last_prescription:latestRecord?.prescription||''};
  });
- const enrich=r=>{const d=by(doctors,'doctor_id',r.doctor_id),patient=by(patients,'patient_id',r.patient_id),a=by(t.appointments,'appointment_id',r.appointment_id);return {...a,...r,phone:patient.phone,email:patient.email,ic_number:patient.ic_number,blood_type:patient.blood_type,doctor_fname:d.first_name||'',doctor_lname:d.last_name||'',appointment_status:a.status||r.status,doctor_name:name(d),doctor_phone:d.phone||'',doctor_gender:d.gender||null,doctor_first_name:d.first_name,doctor_last_name:d.last_name,specialization:d.specialization,consultation_fee:d.consultation_fee,doctor_picture:d.profile_picture,doctor_profile_picture:d.profile_picture,doctor_profile_pic:d.profile_picture,patient_fname:patient.first_name||'',patient_lname:patient.last_name||'',patient_first_name:patient.first_name,patient_last_name:patient.last_name,patient_name:name(patient),patient_phone:patient.phone,patient_email:patient.email,patient_ic:patient.ic_number,patient_dob:patient.date_of_birth,patient_age:patient.age??null,age:patient.age??null,gender:patient.gender,date_of_birth:patient.date_of_birth,patient_gender:patient.gender,patient_profile_picture:patient.profile_picture,patient_profile_pic:patient.profile_picture,profile_picture:patient.profile_picture};};
+ const doctorLookup=[...(data.historicalDoctors||[]),...doctors];
+ const enrich=r=>{const d=by(doctorLookup,'doctor_id',r.doctor_id),patient=by(patients,'patient_id',r.patient_id),a=by(t.appointments,'appointment_id',r.appointment_id);return {...a,...r,phone:patient.phone,email:patient.email,ic_number:patient.ic_number,blood_type:patient.blood_type,doctor_fname:d.first_name||'',doctor_lname:d.last_name||'',appointment_status:a.status||r.status,doctor_name:name(d),doctor_phone:d.phone||'',doctor_gender:d.gender||null,doctor_first_name:d.first_name,doctor_last_name:d.last_name,specialization:d.specialization,consultation_fee:d.consultation_fee,doctor_picture:d.profile_picture,doctor_profile_picture:d.profile_picture,doctor_profile_pic:d.profile_picture,patient_fname:patient.first_name||'',patient_lname:patient.last_name||'',patient_first_name:patient.first_name,patient_last_name:patient.last_name,patient_name:name(patient),patient_phone:patient.phone,patient_email:patient.email,patient_ic:patient.ic_number,patient_dob:patient.date_of_birth,patient_age:patient.age??null,age:patient.age??null,gender:patient.gender,date_of_birth:patient.date_of_birth,patient_gender:patient.gender,patient_profile_picture:patient.profile_picture,patient_profile_pic:patient.profile_picture,profile_picture:patient.profile_picture};};
  const medicationRows=raw=>{
   let rows=raw;if(typeof rows==='string'){try{rows=JSON.parse(rows);}catch{rows=[];}}
   return Array.isArray(rows)?rows.filter(m=>m&&typeof m==='object').map(m=>{
@@ -4163,6 +4164,12 @@ window.CarePlusDoctorPhotos=async(client,directory,tables)=>{
     for(const patient of tables.patients||[])patient.email=(contacts.data||[]).find(r=>String(r.patient_id)===String(patient.patient_id))?.email||'';
    }
   }
+  let historicalDoctors=[];
+  if(protectedRole){
+   const history=await client.rpc('careplus_historical_doctors');if(history.error)throw history.error;
+   historicalDoctors=history.data||[];
+   await window.CarePlusProfilePhotos(client,{doctors:historicalDoctors});
+  }
   const directory=await client.rpc('careplus_doctors');if(directory.error&&protectedRole)throw directory.error;
   const contacts=user?await client.rpc('careplus_doctor_contacts'):{data:[]};
   if(contacts.error)console.error('Doctor contact numbers unavailable:',contacts.error.message);
@@ -4175,7 +4182,7 @@ window.CarePlusDoctorPhotos=async(client,directory,tables)=>{
    for(const doctor of directory.data||[]){const summary=(ratings.data||[]).find(r=>String(r.doctor_id)===String(doctor.doctor_id));if(summary)doctor.rating_summary=summary;}
   }
   await window.CarePlusDoctorPhotos(client,directory.data||[],tables);
-  const data={client,user,profile,tables,directory:directory.data||[],page,base:base.href};
+  const data={client,user,profile,tables,directory:directory.data||[],historicalDoctors,page,base:base.href};
   window.CarePlusOriginalData=data;
   const context=window.CarePlusOriginalContext(data,page);
   const notice=new URLSearchParams(location.search).get('notice');if(notice)context.errors=[notice];

@@ -16,6 +16,7 @@ def main():
         ('20261113000900', 'record_fields'),
         ('20261113001000', 'guest_chat'),
         ('20261113001100', 'checkin_once'),
+        ('20261113001200', 'historical_doctors'),
     ]:
         found = management_query('select version from supabase_migrations.schema_migrations where version=' + literal(version))
         if found:

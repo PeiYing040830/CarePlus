@@ -18,7 +18,15 @@ document.addEventListener('DOMContentLoaded',()=>{
  async function refresh(){
   if(refreshing||document.visibilityState==='hidden')return;
   refreshing=true;
-  try{await window.CarePlusDoctorPhotos(state.client,state.directory,state.tables);render();}
+  try{
+   await window.CarePlusDoctorPhotos(state.client,state.directory,state.tables);
+   if(state.historicalDoctors!==undefined){
+    const result=await state.client.rpc('careplus_historical_doctors');if(result.error)throw result.error;
+    state.historicalDoctors=result.data||[];
+    await window.CarePlusProfilePhotos(state.client,{doctors:state.historicalDoctors});
+   }
+   render();
+  }
   catch(error){console.error('Prescription photographs could not refresh:',error.message);}
   finally{refreshing=false;}
  }
