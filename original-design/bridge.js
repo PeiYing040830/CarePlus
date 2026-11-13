@@ -53,7 +53,11 @@
    for(const key of Object.keys(details))if(typeof details[key]==='string'&&!['profile_picture','profile_image','patient_image','doctor_image','patient_profile_picture','doctor_profile_picture','patient_profile_pic','doctor_profile_pic','doctor_picture'].includes(key))details[key]=window.CarePlusViewPHP.escape(details[key]);
    return {success:true,details};
   }
-  if(endpoint==='chatbot_api.html'){const result=await action('chat',{message:data.message||data.user_message});return {success:true,...result,reply:result.response};}
+  if(endpoint==='chatbot_api.html'){
+   const message=data.message||data.user_message;
+   const result=state.user?await action('chat',{message}):await rpc('careplus_guest_chat',{p_message:message});
+   return {success:true,...result,reply:result.response};
+  }
   if(name==='get_slots'){
    const slots=(await rpc('careplus_slots',{p_doctor:Number(data.doctor_id),p_date:data.date})).filter(s=>s.available);
    return {success:true,slots:slots.map(s=>window.CarePlusViewPHP.date('g:i A',window.CarePlusViewPHP.timestamp(s.slot))),slot_times:slots.map(s=>s.slot)};

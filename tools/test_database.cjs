@@ -215,5 +215,14 @@ const assert=require('node:assert/strict');
  await as('unassigned');assert.equal((await db.query('select * from public.careplus_patient_contacts()')).rows.length,0);
  await as('doctor');assert.equal((await db.query('select * from public.careplus_patient_contacts()')).rows.length,1);
  console.log('Passed: medical record treatment persistence, visit identity validation and assigned-clinician contact visibility.');
+ await db.exec('reset role');
+ await db.exec(`insert into public.chatbot_knowledge(rule_type,topic,keywords,response_text,requires_login) values
+ ('allowed','Test public','opening hours','Synthetic hours',0),('allowed','Test private','appointment status','PRIVATE',1),('restricted','Test restriction','diagnose','Consult a professional',0);`);
+ await as('');
+ const guest=async text=>(await db.query('select public.careplus_guest_chat($1) as r',[text])).rows[0].r;
+ assert.equal((await guest('opening hours')).response,'Synthetic hours');assert.equal((await guest('appointment status')).requires_login,true);assert.equal((await guest('diagnose')).is_restricted,true);
+ await deny(()=>guest(''),/1 to 1000/);await deny(()=>guest('x'.repeat(1001)),/1 to 1000/);
+ await deny(()=>db.query('select * from public.chatbot_knowledge'),/permission denied/);await deny(()=>action('book',{}),/active account/);
+ console.log('Passed: anonymous public chat, private/restricted topic boundaries and input validation.');
  await db.close();
 })().catch(error=>{console.error(error.message);process.exitCode=1;});
